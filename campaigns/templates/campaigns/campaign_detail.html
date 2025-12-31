@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load django_bootstrap5 %}
 
 {% block title %}{{ campaign.name }} - Reddit Watch{% endblock %}
 
@@ -27,13 +28,239 @@
         </button>
     </div>
 
-    {# Keywords List #}
+    {# Keywords Container #}
     <div id="keywords_container">
-        {% include "campaigns/partials/keyword_partials.html" %}
+        {% partial keywords_container %}
     </div>
 </div>
 
-{# Load and render modals #}
-{% include "campaigns/partials/keyword_modals.html" with render_create_keyword_modal=True %}
+{# Explicitly render CREATE keyword modal #}
+{% partial create_keyword_modal %}
 
+{# --- INLINE PARTIALS --- #}
+
+{# Container partial #}
+{% partialdef keywords_container %}
+{% if campaign.keywords.all %}
+{% partial keywords_list %}
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-tag display-3 text-muted"></i>
+    <p class="text-muted mt-3">No keywords yet. Add your first keyword to start monitoring!</p>
+</div>
+{% endif %}
+{% endpartialdef %}
+
+{# Keywords List #}
+{% partialdef keywords_list %}
+<div class="row g-3" id="keywords_list">
+    {% for keyword in campaign.keywords.all %}
+    {% partial keyword_card %}
+    {% endfor %}
+</div>
+{% endpartialdef %}
+
+{# Keyword Card #}
+{% partialdef keyword_card %}
+<div class="col-md-6" id="keyword_card_{{ keyword.id }}">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="flex-grow-1">
+                    <h5 class="card-title mb-1">{{ keyword.name }}</h5>
+                    <p class="card-text text-muted small mb-2">{{ keyword.description }}</p>
+                </div>
+                <div class="btn-group btn-group-sm ms-2">
+                    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#editKeywordModal{{ keyword.id }}">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#deleteKeywordModal{{ keyword.id }}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            {# Tags for this keyword #}
+            <div class="d-flex flex-wrap gap-1 mb-2">
+                {% for tag in keyword.tags.all %}
+                <span class="badge bg-secondary position-relative" data-bs-toggle="tooltip"
+                    title="{{ tag.description }}">
+                    {{ tag.name }}
+                    <button type="button"
+                        class="btn-close btn-close-white position-absolute top-0 start-100 translate-middle p-1"
+                        style="font-size: 0.5rem;" data-bs-toggle="modal"
+                        data-bs-target="#deleteTagModal{{ tag.id }}"></button>
+                </span>
+                {# Render Delete Tag Modal #}
+                {% partial delete_tag_modal %}
+                {% empty %}
+                <span class="text-muted small">No tags</span>
+                {% endfor %}
+            </div>
+
+            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
+                data-bs-target="#createTagModal{{ keyword.id }}">
+                <i class="bi bi-tag me-1"></i>Add Tag
+            </button>
+        </div>
+    </div>
+
+    {# Render Modals for this keyword #}
+    {% partial edit_keyword_modal %}
+    {% partial delete_keyword_modal %}
+    {% partial create_tag_modal %}
+</div>
+{% endpartialdef %}
+
+{# --- MODAL DEFINITIONS --- #}
+
+{# Edit keyword modal #}
+{% partialdef edit_keyword_modal %}
+<div class="modal fade" id="editKeywordModal{{ keyword.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Keyword</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form hx-post="{% url 'campaigns:keyword_update' keyword.pk %}" hx-target="#keyword_card_{{ keyword.id }}"
+                hx-swap="outerHTML">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" name="name" value="{{ keyword.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="2">{{ keyword.description }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endpartialdef %}
+
+{# Delete keyword modal #}
+{% partialdef delete_keyword_modal %}
+<div class="modal fade" id="deleteKeywordModal{{ keyword.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h6 class="modal-title">Delete Keyword?</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form hx-post="{% url 'campaigns:keyword_delete' keyword.pk %}" hx-target="#keywords_container"
+                hx-swap="innerHTML">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="mb-0">Delete <strong>{{ keyword.name }}</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endpartialdef %}
+
+{# Create tag modal #}
+{% partialdef create_tag_modal %}
+<div class="modal fade" id="createTagModal{{ keyword.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Add Tag</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form hx-post="{% url 'campaigns:tag_create' keyword.pk %}" hx-target="#keyword_card_{{ keyword.id }}"
+                hx-swap="outerHTML">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control form-control-sm" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control form-control-sm" name="description">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endpartialdef %}
+
+{# Delete tag modal #}
+{% partialdef delete_tag_modal %}
+<div class="modal fade" id="deleteTagModal{{ tag.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h6 class="modal-title">Delete Tag?</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form hx-post="{% url 'campaigns:tag_delete' tag.pk %}" hx-target="#keyword_card_{{ keyword.id }}"
+                hx-swap="outerHTML">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="mb-0">Delete tag <strong>{{ tag.name }}</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endpartialdef %}
+
+{# Create keyword modal #}
+{% partialdef create_keyword_modal %}
+<div class="modal fade" id="createKeywordModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Keyword</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form hx-post="{% url 'campaigns:keyword_create' campaign.pk %}" hx-target="#keywords_container"
+                hx-swap="innerHTML">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" name="name" placeholder="e.g., Python, Django, AI"
+                            required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="2"
+                            placeholder="What to look for..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Keyword</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endpartialdef %}
 {% endblock %}

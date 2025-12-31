@@ -23,7 +23,7 @@ def campaign_create(request):
         Campaign.objects.create(name=name, description=request.POST.get('description', ''))
     
     campaigns = Campaign.objects.all().prefetch_related('keywords')
-    return render(request, 'campaigns/partials/campaign_list_partials.html#campaigns_container', {'campaigns': campaigns})
+    return render(request, 'campaigns/campaign_list.html#campaigns_container', {'campaigns': campaigns})
 
 
 @require_http_methods(["POST"])
@@ -35,7 +35,7 @@ def campaign_update(request, pk):
     campaign.save()
     
     campaigns = Campaign.objects.all().prefetch_related('keywords')
-    return render(request, 'campaigns/partials/campaign_list_partials.html#campaigns_container', {'campaigns': campaigns})
+    return render(request, 'campaigns/campaign_list.html#campaigns_container', {'campaigns': campaigns})
 
 
 @require_http_methods(["POST"])
@@ -45,7 +45,7 @@ def campaign_delete(request, pk):
     campaign.delete()
     
     campaigns = Campaign.objects.all().prefetch_related('keywords')
-    return render(request, 'campaigns/partials/campaign_list_partials.html#campaigns_container', {'campaigns': campaigns})
+    return render(request, 'campaigns/campaign_list.html#campaigns_container', {'campaigns': campaigns})
 
 
 @require_http_methods(["POST"])
@@ -59,7 +59,7 @@ def keyword_create(request, campaign_pk):
     
     # Refetch campaign with updated keywords
     campaign = get_object_or_404(Campaign.objects.prefetch_related('keywords__tags'), pk=campaign_pk)
-    return render(request, 'campaigns/partials/keyword_partials.html#keywords_container', {'campaign': campaign})
+    return render(request, 'campaigns/campaign_detail.html#keywords_container', {'campaign': campaign})
 
 
 @require_http_methods(["POST"])
@@ -71,7 +71,7 @@ def keyword_update(request, pk):
     keyword.save()
     
     campaign = keyword.campaign
-    return render(request, 'campaigns/partials/keyword_partials.html#keyword_card', {'campaign': campaign, 'keyword': keyword})
+    return render(request, 'campaigns/campaign_detail.html#keyword_card', {'campaign': campaign, 'keyword': keyword})
 
 
 @require_http_methods(["POST"])
@@ -82,7 +82,7 @@ def keyword_delete(request, pk):
     keyword.delete()
     
     campaign = get_object_or_404(Campaign.objects.prefetch_related('keywords__tags'), pk=campaign_pk)
-    return render(request, 'campaigns/partials/keyword_partials.html#keywords_container', {'campaign': campaign})
+    return render(request, 'campaigns/campaign_detail.html#keywords_container', {'campaign': campaign})
 
 
 @require_http_methods(["POST"])
@@ -97,7 +97,7 @@ def tag_create(request, keyword_pk):
         keyword = get_object_or_404(Keyword.objects.select_related('campaign').prefetch_related('tags'), pk=keyword_pk)
     
     campaign = keyword.campaign
-    return render(request, 'campaigns/partials/keyword_partials.html#keyword_card', {'campaign': campaign, 'keyword': keyword})
+    return render(request, 'campaigns/campaign_detail.html#keyword_card', {'campaign': campaign, 'keyword': keyword})
 
 
 @require_http_methods(["POST"])
@@ -110,7 +110,7 @@ def tag_update(request, pk):
     
     keyword = tag.keyword
     campaign = keyword.campaign
-    return render(request, 'campaigns/partials/keyword_partials.html#keyword_card', {'campaign': campaign, 'keyword': keyword})
+    return render(request, 'campaigns/campaign_detail.html#keyword_card', {'campaign': campaign, 'keyword': keyword})
 
 
 @require_http_methods(["POST"])
@@ -123,4 +123,4 @@ def tag_delete(request, pk):
     
     # Refetch keyword to get updated tags
     keyword = get_object_or_404(Keyword.objects.select_related('campaign').prefetch_related('tags'), pk=keyword.pk)
-    return render(request, 'campaigns/partials/keyword_partials.html#keyword_card', {'campaign': campaign, 'keyword': keyword})
+    return render(request, 'campaigns/campaign_detail.html#keyword_card', {'campaign': campaign, 'keyword': keyword})

@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% load django_bootstrap5 %}
 
 {% block title %}Campaigns - Reddit Watch{% endblock %}
 
 {% block content %}
+
 <div class="container my-5">
     {# Header Section #}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -15,13 +17,200 @@
         </button>
     </div>
 
-    {# Campaigns Table or Empty State #}
+    {# Campaigns Container #}
     <div id="campaigns_container">
-        {% include "campaigns/partials/campaign_list_partials.html" %}
+        {% partial campaigns_container %}
     </div>
 </div>
 
-{# Load and render modals #}
-{% include "campaigns/partials/campaign_modals.html" with render_create_modal=True %}
+{# Explicitly render CREATE modal #}
+{% partial create_campaign_modal %}
+
+{# --- INLINE PARTIALS --- #}
+
+{# Container partial - determines whether to show table or empty state #}
+{% partialdef campaigns_container %}
+{% if campaigns %}
+{% partial campaigns_table %}
+{% else %}
+{% partial empty_state %}
+{% endif %}
+{% endpartialdef %}
+
+{# Campaigns Table Partial #}
+{% partialdef campaigns_table %}
+<div id="campaigns_table" class="card shadow-sm overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th scope="col" class="ps-3" style="width: 30%;">Name</th>
+                    <th scope="col" style="width: 40%;">Description</th>
+                    <th scope="col" class="text-center" style="width: 15%;">Keywords</th>
+                    <th scope="col" class="text-end pe-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for campaign in campaigns %}
+                <tr>
+                    <td class="ps-3">
+                        <a href="{% url 'campaigns:campaign_detail' campaign.pk %}"
+                            class="fw-semibold text-decoration-none text-dark d-block">
+                            {{ campaign.name }}
+                        </a>
+                    </td>
+                    <td class="text-muted small">
+                        {{ campaign.description|truncatewords:15|default:"<em>No description provided</em>" }}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2">
+                            {{ campaign.keywords.count }}
+                        </span>
+                    </td>
+                    <td class="text-end pe-3">
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary border-0" data-bs-toggle="modal"
+                                data-bs-target="#editCampaignModal{{ campaign.id }}">
+                                <i class="bi bi-pencil-fill me-1"></i>Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal"
+                                data-bs-target="#deleteCampaignModal{{ campaign.id }}">
+                                <i class="bi bi-trash-fill me-1"></i>Delete
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {# Render Modals for this campaign inside the loop #}
+                {% partial edit_campaign_modal %}
+                {% partial delete_campaign_modal %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endpartialdef %}
+
+{# Empty State Partial #}
+{% partialdef empty_state %}
+<div class="text-center py-5">
+    <div class="mb-4">
+        <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center"
+            style="width: 80px; height: 80px;">
+            <i class="bi bi-folder2-open text-muted fs-1"></i>
+        </div>
+    </div>
+    <h4 class="text-dark fw-bold">No campaigns yet</h4>
+    <p class="text-muted mb-4">Create your first campaign to start monitoring Reddit threads and comments.</p>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCampaignModal">
+        <i class="bi bi-plus-lg me-2"></i>Create Campaign
+    </button>
+</div>
+{% endpartialdef %}
+
+{# --- MODAL DEFINITIONS --- #}
+
+{# Edit campaign modal #}
+{% partialdef edit_campaign_modal %}
+<div class="modal fade" id="editCampaignModal{{ campaign.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Campaign</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form hx-post="{% url 'campaigns:campaign_update' campaign.pk %}" hx-target="#campaigns_container"
+                hx-swap="innerHTML">
+                {% csrf_token %}
+                <div class="modal-body text-start">
+                    <div class="mb-3">
+                        <label for="editName{{ campaign.id }}"
+                            class="form-label fw-medium small text-uppercase text-muted">Name</label>
+                        <input type="text" class="form-control" id="editName{{ campaign.id }}" name="name"
+                            value="{{ campaign.name }}" required>
+                    </div>
+                    <div class="mb-0">
+                        <label for="editDescription{{ campaign.id }}"
+                            class="form-label fw-medium small text-uppercase text-muted">Description</label>
+                        <textarea class="form-control" id="editDescription{{ campaign.id }}" name="description"
+                            rows="3">{{ campaign.description }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light text-muted" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endpartialdef %}
+
+{# Delete campaign modal #}
+{% partialdef delete_campaign_modal %}
+<div class="modal fade" id="deleteCampaignModal{{ campaign.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-bottom-0 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center pt-0">
+                <div class="mb-3 text-warning">
+                    <i class="bi bi-exclamation-circle-fill display-4"></i>
+                </div>
+                <h5 class="modal-title mb-2">Delete Campaign?</h5>
+                <p class="text-muted small mb-4">
+                    Are you sure you want to delete <strong>{{ campaign.name }}</strong>?<br>
+                    This will remove all associated keywords and data.
+                </p>
+
+                <form hx-post="{% url 'campaigns:campaign_delete' campaign.pk %}" hx-target="#campaigns_container"
+                    hx-swap="innerHTML">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-light text-muted px-4"
+                            data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger px-4">Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endpartialdef %}
+
+{# Create campaign modal #}
+{% partialdef create_campaign_modal %}
+<div class="modal fade" id="createCampaignModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Campaign</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form hx-post="{% url 'campaigns:campaign_create' %}" hx-target="#campaigns_container" hx-swap="innerHTML">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="campaignName"
+                            class="form-label fw-medium small text-uppercase text-muted">Name</label>
+                        <input type="text" class="form-control" id="campaignName" name="name"
+                            placeholder="e.g. Competitor Analysis" required>
+                    </div>
+                    <div class="mb-0">
+                        <label for="campaignDescription"
+                            class="form-label fw-medium small text-uppercase text-muted">Description</label>
+                        <textarea class="form-control" id="campaignDescription" name="description" rows="3"
+                            placeholder="What are you tracking with this campaign?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light text-muted" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Campaign</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endpartialdef %}
 
 {% endblock %}
