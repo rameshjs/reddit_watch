@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Campaigns - Reddit Watch{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Campaigns</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCampaignModal">
+            <i class="bi bi-plus-circle me-2"></i>New Campaign
+        </button>
+    </div>
+
+    {% if campaigns %}
+    <div class="row g-3">
+        {% for campaign in campaigns %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">{{ campaign.name }}</h5>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#editCampaignModal{{ campaign.id }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#deleteCampaignModal{{ campaign.id }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="card-text text-muted small mb-3">{{ campaign.description|truncatewords:15 }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge bg-primary">{{ campaign.keywords.count }} keyword{{
+                            campaign.keywords.count|pluralize }}</span>
+                        <a href="{% url 'campaigns:campaign_detail' campaign.pk %}" class="btn btn-sm btn-primary">View
+                            Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Edit Campaign Modal #}
+        <div class="modal fade" id="editCampaignModal{{ campaign.id }}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Campaign</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="post" action="{% url 'campaigns:campaign_update' campaign.pk %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="editName{{ campaign.id }}" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="editName{{ campaign.id }}" name="name"
+                                    value="{{ campaign.name }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editDescription{{ campaign.id }}" class="form-label">Description</label>
+                                <textarea class="form-control" id="editDescription{{ campaign.id }}" name="description"
+                                    rows="3">{{ campaign.description }}</textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {# Delete Campaign Modal #}
+        <div class="modal fade" id="deleteCampaignModal{{ campaign.id }}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger">
+                        <h5 class="modal-title">Confirm Delete</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="post" action="{% url 'campaigns:campaign_delete' campaign.pk %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete <strong>{{ campaign.name }}</strong>?</p>
+                            <p class="text-muted small">This will also delete all associated keywords and tags.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-inbox display-1 text-muted"></i>
+        <p class="lead text-muted mt-3">No campaigns yet. Create your first campaign to get started!</p>
+    </div>
+    {% endif %}
+</div>
+
+{# Create Campaign Modal #}
+<div class="modal fade" id="createCampaignModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Campaign</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'campaigns:campaign_create' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="campaignName" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="campaignName" name="name"
+                            placeholder="e.g., Tech News Monitor" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="campaignDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="campaignDescription" name="description" rows="3"
+                            placeholder="Describe what this campaign monitors..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Campaign</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
