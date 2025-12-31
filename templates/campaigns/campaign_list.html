@@ -18,19 +18,19 @@
     {% if campaigns %}
     <div class="card shadow-sm overflow-hidden">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th scope="col" class="ps-4" style="width: 30%;">Name</th>
+                        <th scope="col" class="ps-3" style="width: 30%;">Name</th>
                         <th scope="col" style="width: 40%;">Description</th>
                         <th scope="col" class="text-center" style="width: 15%;">Keywords</th>
-                        <th scope="col" class="text-end pe-4">Actions</th>
+                        <th scope="col" class="text-end pe-3">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for campaign in campaigns %}
                     <tr>
-                        <td class="ps-4">
+                        <td class="ps-3">
                             <a href="{% url 'campaigns:campaign_detail' campaign.pk %}"
                                 class="fw-semibold text-decoration-none text-dark d-block">
                                 {{ campaign.name }}
@@ -40,11 +40,11 @@
                             {{ campaign.description|truncatewords:15|default:"<em>No description provided</em>" }}
                         </td>
                         <td class="text-center">
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3">
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2">
                                 {{ campaign.keywords.count }}
                             </span>
                         </td>
-                        <td class="text-end pe-4">
+                        <td class="text-end pe-3">
                             <div class="d-flex justify-content-end gap-2">
                                 <button type="button" class="btn btn-sm btn-outline-primary border-0"
                                     data-bs-toggle="modal" data-bs-target="#editCampaignModal{{ campaign.id }}">
