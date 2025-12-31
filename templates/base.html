@@ -21,6 +21,9 @@
     {# Custom CSS #}
     <link rel="stylesheet" href="{% static 'css/custom.css' %}">
 
+    {# htmx for dynamic partial updates #}
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -55,6 +58,23 @@
 
     {# Load Bootstrap 5 JavaScript #}
     {% bootstrap_javascript %}
+
+    {# htmx configuration - auto-close modals after updates #}
+    <script>
+        document.body.addEventListener('htmx:afterSwap', function (event) {
+            // Close all open modals after htmx successfully updates content
+            var openModal = document.querySelector('.modal.show');
+            if (openModal) {
+                var modalInstance = bootstrap.Modal.getInstance(openModal);
+                if (modalInstance) modalInstance.hide();
+            }
+
+            // Clean up modal backdrops
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('padding-right');
+        });
+    </script>
 
     {% block extra_js %}{% endblock %}
 </body>

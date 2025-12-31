@@ -1,5 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_http_methods
 from .models import Campaign, Keyword, Tag
 
@@ -18,97 +17,110 @@ def campaign_detail(request, pk):
 
 @require_http_methods(["POST"])
 def campaign_create(request):
-    """Create a new campaign"""
+    """Create a new campaign and return updated campaigns container"""
     name = request.POST.get('name')
-    description = request.POST.get('description', '')
-    
     if name:
-        campaign = Campaign.objects.create(name=name, description=description)
-        return redirect('campaigns:campaign_detail', pk=campaign.pk)
+        Campaign.objects.create(name=name, description=request.POST.get('description', ''))
     
-    return redirect('campaigns:campaign_list')
+    campaigns = Campaign.objects.all().prefetch_related('keywords')
+    return render(request, 'campaigns/partials/campaign_list_partials.html#campaigns_container', {'campaigns': campaigns})
 
 
 @require_http_methods(["POST"])
 def campaign_update(request, pk):
-    """Update an existing campaign"""
+    """Update an existing campaign and return updated campaigns container"""
     campaign = get_object_or_404(Campaign, pk=pk)
     campaign.name = request.POST.get('name', campaign.name)
     campaign.description = request.POST.get('description', campaign.description)
     campaign.save()
     
-    return redirect('campaigns:campaign_detail', pk=campaign.pk)
+    campaigns = Campaign.objects.all().prefetch_related('keywords')
+    return render(request, 'campaigns/partials/campaign_list_partials.html#campaigns_container', {'campaigns': campaigns})
 
 
 @require_http_methods(["POST"])
 def campaign_delete(request, pk):
-    """Delete a campaign"""
+    """Delete a campaign and return updated campaigns container"""
     campaign = get_object_or_404(Campaign, pk=pk)
     campaign.delete()
-    return redirect('campaigns:campaign_list')
+    
+    campaigns = Campaign.objects.all().prefetch_related('keywords')
+    return render(request, 'campaigns/partials/campaign_list_partials.html#campaigns_container', {'campaigns': campaigns})
 
 
 @require_http_methods(["POST"])
 def keyword_create(request, campaign_pk):
-    """Create a new keyword for a campaign"""
+    """Create a new keyword and return updated keywords list"""
     campaign = get_object_or_404(Campaign, pk=campaign_pk)
     name = request.POST.get('name')
-    description = request.POST.get('description', '')
     
     if name:
-        Keyword.objects.create(campaign=campaign, name=name, description=description)
+        Keyword.objects.create(campaign=campaign, name=name, description=request.POST.get('description', ''))
     
-    return redirect('campaigns:campaign_detail', pk=campaign_pk)
+    # Refetch campaign with updated keywords
+    campaign = get_object_or_404(Campaign.objects.prefetch_related('keywords__tags'), pk=campaign_pk)
+    return render(request, 'campaigns/partials/keyword_partials.html#keywords_container', {'campaign': campaign})
 
 
 @require_http_methods(["POST"])
 def keyword_update(request, pk):
-    """Update an existing keyword"""
-    keyword = get_object_or_404(Keyword, pk=pk)
+    """Update an existing keyword and return updated keyword card"""
+    keyword = get_object_or_404(Keyword.objects.select_related('campaign').prefetch_related('tags'), pk=pk)
     keyword.name = request.POST.get('name', keyword.name)
     keyword.description = request.POST.get('description', keyword.description)
     keyword.save()
     
-    return redirect('campaigns:campaign_detail', pk=keyword.campaign.pk)
+    campaign = keyword.campaign
+    return render(request, 'campaigns/partials/keyword_partials.html#keyword_card', {'campaign': campaign, 'keyword': keyword})
 
 
 @require_http_methods(["POST"])
 def keyword_delete(request, pk):
-    """Delete a keyword"""
+    """Delete a keyword and return updated keywords list"""
     keyword = get_object_or_404(Keyword, pk=pk)
     campaign_pk = keyword.campaign.pk
     keyword.delete()
-    return redirect('campaigns:campaign_detail', pk=campaign_pk)
+    
+    campaign = get_object_or_404(Campaign.objects.prefetch_related('keywords__tags'), pk=campaign_pk)
+    return render(request, 'campaigns/partials/keyword_partials.html#keywords_container', {'campaign': campaign})
 
 
 @require_http_methods(["POST"])
 def tag_create(request, keyword_pk):
-    """Create a new tag for a keyword"""
-    keyword = get_object_or_404(Keyword, pk=keyword_pk)
+    """Create a new tag and return updated keyword card"""
+    keyword = get_object_or_404(Keyword.objects.select_related('campaign').prefetch_related('tags'), pk=keyword_pk)
     name = request.POST.get('name')
-    description = request.POST.get('description', '')
     
     if name:
-        Tag.objects.create(keyword=keyword, name=name, description=description)
+        Tag.objects.create(keyword=keyword, name=name, description=request.POST.get('description', ''))
+        # Refetch to get updated tags
+        keyword = get_object_or_404(Keyword.objects.select_related('campaign').prefetch_related('tags'), pk=keyword_pk)
     
-    return redirect('campaigns:campaign_detail', pk=keyword.campaign.pk)
+    campaign = keyword.campaign
+    return render(request, 'campaigns/partials/keyword_partials.html#keyword_card', {'campaign': campaign, 'keyword': keyword})
 
 
 @require_http_methods(["POST"])
 def tag_update(request, pk):
-    """Update an existing tag"""
-    tag = get_object_or_404(Tag, pk=pk)
+    """Update an existing tag and return updated keyword card"""
+    tag = get_object_or_404(Tag.objects.select_related('keyword__campaign'), pk=pk)
     tag.name = request.POST.get('name', tag.name)
     tag.description = request.POST.get('description', tag.description)
     tag.save()
     
-    return redirect('campaigns:campaign_detail', pk=tag.keyword.campaign.pk)
+    keyword = tag.keyword
+    campaign = keyword.campaign
+    return render(request, 'campaigns/partials/keyword_partials.html#keyword_card', {'campaign': campaign, 'keyword': keyword})
 
 
 @require_http_methods(["POST"])
 def tag_delete(request, pk):
-    """Delete a tag"""
-    tag = get_object_or_404(Tag, pk=pk)
-    campaign_pk = tag.keyword.campaign.pk
+    """Delete a tag and return updated keyword card"""
+    tag = get_object_or_404(Tag.objects.select_related('keyword__campaign'), pk=pk)
+    keyword = tag.keyword
+    campaign = keyword.campaign
     tag.delete()
-    return redirect('campaigns:campaign_detail', pk=campaign_pk)
+    
+    # Refetch keyword to get updated tags
+    keyword = get_object_or_404(Keyword.objects.select_related('campaign').prefetch_related('tags'), pk=keyword.pk)
+    return render(request, 'campaigns/partials/keyword_partials.html#keyword_card', {'campaign': campaign, 'keyword': keyword})

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}{{ campaign.name }} - Reddit Watch{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    {# Campaign Header #}
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h2 class="mb-2">{{ campaign.name }}</h2>
+                    <p class="text-muted mb-0">{{ campaign.description }}</p>
+                </div>
+                <a href="{% url 'campaigns:campaign_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {# Keywords Section Header #}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Keywords</h4>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createKeywordModal">
+            <i class="bi bi-plus-circle me-2"></i>Add Keyword
+        </button>
+    </div>
+
+    {# Keywords List #}
+    <div id="keywords_container">
+        {% include "campaigns/partials/keyword_partials.html" %}
+    </div>
+</div>
+
+{# Load and render modals #}
+{% include "campaigns/partials/keyword_modals.html" with render_create_keyword_modal=True %}
+
+{% endblock %}

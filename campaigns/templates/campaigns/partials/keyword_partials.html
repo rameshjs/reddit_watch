@@ -1,0 +1,75 @@
+{% load django_bootstrap5 %}
+
+{# Container partial for keywords - handles empty and populated states #}
+{% partialdef keywords_container %}
+{% if campaign.keywords.all %}
+{% partial keywords_list %}
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-tag display-3 text-muted"></i>
+    <p class="text-muted mt-3">No keywords yet. Add your first keyword to start monitoring!</p>
+</div>
+{% endif %}
+{% endpartialdef %}
+
+{# Keywords list #}
+{% partialdef keywords_list %}
+<div class="row g-3" id="keywords_list">
+    {% for keyword in campaign.keywords.all %}
+    {% partial keyword_card %}
+    {% endfor %}
+</div>
+{% endpartialdef %}
+
+{# Individual keyword card with tags #}
+{% partialdef keyword_card %}
+<div class="col-md-6" id="keyword_card_{{ keyword.id }}">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="flex-grow-1">
+                    <h5 class="card-title mb-1">{{ keyword.name }}</h5>
+                    <p class="card-text text-muted small mb-2">{{ keyword.description }}</p>
+                </div>
+                <div class="btn-group btn-group-sm ms-2">
+                    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#editKeywordModal{{ keyword.id }}">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#deleteKeywordModal{{ keyword.id }}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            {# Tags for this keyword #}
+            <div class="d-flex flex-wrap gap-1 mb-2">
+                {% for tag in keyword.tags.all %}
+                <span class="badge bg-secondary position-relative" data-bs-toggle="tooltip"
+                    title="{{ tag.description }}">
+                    {{ tag.name }}
+                    <button type="button"
+                        class="btn-close btn-close-white position-absolute top-0 start-100 translate-middle p-1"
+                        style="font-size: 0.5rem;" data-bs-toggle="modal"
+                        data-bs-target="#deleteTagModal{{ tag.id }}"></button>
+                </span>
+                {% empty %}
+                <span class="text-muted small">No tags</span>
+                {% endfor %}
+            </div>
+
+            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
+                data-bs-target="#createTagModal{{ keyword.id }}">
+                <i class="bi bi-tag me-1"></i>Add Tag
+            </button>
+        </div>
+    </div>
+</div>
+
+{# Include modals for this specific keyword #}
+{% include "campaigns/partials/keyword_modals.html" with render_keyword_modals=True %}
+{% endpartialdef %}
+
+{# Auto-render based on context #}
+{% partial keywords_container %}
