@@ -91,3 +91,38 @@ class Tag(models.Model):
     
     def __str__(self):
         return self.name
+
+class RedditPost(models.Model):
+    """A Reddit post related to a campaign"""
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='posts')
+    title = models.CharField(max_length=300)
+    url = models.URLField()
+    author = models.CharField(max_length=100)
+    score = models.IntegerField(default=0)
+    num_comments = models.IntegerField(default=0)
+    created_utc = models.DateTimeField()
+    reddit_id = models.CharField(max_length=20, unique=True)
+    fetched_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_utc']
+        
+    def __str__(self):
+        return self.title
+
+
+class RedditComment(models.Model):
+    """A comment on a Reddit post"""
+    post = models.ForeignKey(RedditPost, on_delete=models.CASCADE, related_name='comments')
+    body = models.TextField()
+    author = models.CharField(max_length=100)
+    score = models.IntegerField(default=0)
+    created_utc = models.DateTimeField()
+    reddit_id = models.CharField(max_length=20, unique=True)
+    fetched_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_utc']
+        
+    def __str__(self):
+        return f"Comment by {self.author} on {self.post}"

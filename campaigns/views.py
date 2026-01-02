@@ -79,6 +79,12 @@ def campaign_update(request, pk):
             
     campaign.save()
     
+    # Check if update came from detail page
+    if request.POST.get('source') == 'detail':
+        # Refetch to ensure optimizations
+        campaign = get_object_or_404(Campaign.objects.prefetch_related('keywords__tags'), pk=campaign.pk)
+        return render(request, 'campaigns/campaign_detail.html', {'campaign': campaign})
+
     campaigns = Campaign.objects.all().prefetch_related('keywords')
     return render(request, 'campaigns/campaign_list.html#campaigns_container', {'campaigns': campaigns})
 
