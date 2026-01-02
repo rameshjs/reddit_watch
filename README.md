@@ -1,23 +1,18 @@
-### I built Reddit Watch for my own use because I wanted a better way to monitor specific keywords on Reddit without constantly checking the site. My main goal is to use AI to filter posts by context—separating the signal from the noise—rather than just getting a raw list of every keyword match.
+### I built Reddit Watch for my own use because I wanted a better way to monitor specific keywords on Reddit without constantly checking the site. My main goal is to use AI to filter posts by context to separate the signal from the noise, rather than just getting a raw list of every keyword match.
 
 ## How it works
 
-- **Campaigns**: I create campaigns for different topics I want to track.
-- **Background Monitoring**: It runs periodic checks using **Celery** and **Redis** so I don't have to do it manually.
-- **Storage**: Everything gets saved to a **Postgres** database for analysis.
-- **Development Status**: Currently, it's set up with a simulation engine (`check_reddit_campaign`) that generates mock data. This lets me test the UI and scheduling logic without worrying about Reddit API limits while building out the core features.
+I create campaigns for different topics I want to track, and the application handles the rest in the background using **Celery** and **Redis** for periodic checks. This automation saves me from manual monitoring. All data is stored in a **Postgres** database for future analysis.
+
+Currently, the project is in a development phase where it uses a simulation engine (`check_reddit_campaign`) to generate mock data. This setup allows me to test the scheduling logic and UI components without hitting Reddit API limits while I finalize the core monitoring features.
 
 ## Tech Stack
 
-- **Backend**: Django, Python
-- **Task Queue**: Celery, Redis
-- **Database**: PostgreSQL
-- **Infrastructure**: Docker, Docker Compose
+The backend is built with **Django** and **Python**, relying on **Celery** and **Redis** for background tasks and **PostgreSQL** for data storage. The entire infrastructure is containerized using **Docker** and **Docker Compose** for consistent deployment.
 
 ## Prerequisites
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+To run this locally, you'll need [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed on your machine.
 
 ## Setup
 
@@ -32,9 +27,9 @@
    ```bash
    cp .env.example .env.dev
    ```
-   *Note: Update `.env.dev` with your configuration if needed.*
+   *Note: Update `.env.dev` with your custom configuration if needed.*
 
-3. **Build and run with Docker:**
+3. **Build and run:**
    ```bash
    docker-compose up --build
    ```
@@ -44,12 +39,12 @@
 
 ## Development
 
-- **Run migrations:**
-  ```bash
-  docker-compose exec web python manage.py migrate
-  ```
+**Run migrations:**
+```bash
+docker-compose exec web python manage.py migrate
+```
 
-- **Create superuser:**
-  ```bash
-  docker-compose exec web python manage.py createsuperuser
-  ```
+**Create superuser:**
+```bash
+docker-compose exec web python manage.py createsuperuser
+```
