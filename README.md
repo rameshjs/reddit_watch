@@ -1,10 +1,15 @@
-### I built Reddit Watch for my own use because I wanted a better way to monitor specific keywords on Reddit without constantly checking the site. My main goal is to use AI to filter posts by context to separate the signal from the noise, rather than just getting a raw list of every keyword match.
+### Reddit Watch
+
+I built Reddit Watch for my own use because I wanted a better way to monitor specific keywords on Reddit without constantly checking the site. My main goal is to use AI to filter posts by context to separate the signal from the noise, rather than just getting a raw list of every keyword match.
 
 ## How it works
 
-I create campaigns for different topics I want to track, and the application handles the rest in the background using **Celery** and **Redis** for periodic checks. This automation saves me from manual monitoring. All data is stored in a **Postgres** database for future analysis.
+The application operates in two distinct stages to ensure meaningful data matching:
 
-Currently, the project is in a development phase where it uses a simulation engine (`check_reddit_campaign`) to generate mock data. This setup allows me to test the scheduling logic and UI components without hitting Reddit API limits while I finalize the core monitoring features.
+1.  **Global Ingestion**: A background task continuously fetches new posts and comments from `r/all` using the Reddit JSON API. This ensures we have a local cache of recent Reddit activity. To respect Reddit's API limits, this uses cursor-based pagination and intelligent back-off (resetting only when the feed id becomes stale).
+2.  **Campaign Matching**: Separate background tasks run for each compaign (at user-defined intervals) to scan the locally ingested data against your specific keywords. This decoupling allows for heavy processing or future AI analysis without slowing down the ingestion pipeline.
+
+All data is stored in a **Postgres** database, and tasks are orchestrated by **Celery** with **Redis** as the broker.
 
 ## Tech Stack
 
