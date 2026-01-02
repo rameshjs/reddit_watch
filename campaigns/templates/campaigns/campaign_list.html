@@ -58,6 +58,15 @@
                             class="fw-semibold text-decoration-none text-dark d-block">
                             {{ campaign.name }}
                         </a>
+                        {% if not campaign.is_watching %}
+                        <span class="badge bg-warning text-dark" style="font-size: 0.65em;">
+                            <i class="bi bi-pause-fill me-1"></i>Not Watching
+                        </span>
+                        {% else %}
+                        <span class="badge bg-success" style="font-size: 0.65em;">
+                            <i class="bi bi-activity me-1"></i>Watching ({{ campaign.watch_interval_minutes }}m)
+                        </span>
+                        {% endif %}
                     </td>
                     <td class="text-muted small">
                         {{ campaign.description|truncatewords:15|default:"<em>No description provided</em>" }}
@@ -95,7 +104,7 @@
 <div class="text-center py-5">
     <div class="mb-4">
         <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center"
-            style="width: 80px; height: 80px;">
+            style="width: 80px; height: 80px">
             <i class="bi bi-folder2-open text-muted fs-1"></i>
         </div>
     </div>
@@ -128,11 +137,30 @@
                         <input type="text" class="form-control" id="editName{{ campaign.id }}" name="name"
                             value="{{ campaign.name }}" required>
                     </div>
-                    <div class="mb-0">
+                    <div class="mb-3">
                         <label for="editDescription{{ campaign.id }}"
                             class="form-label fw-medium small text-uppercase text-muted">Description</label>
                         <textarea class="form-control" id="editDescription{{ campaign.id }}" name="description"
                             rows="3">{{ campaign.description }}</textarea>
+                    </div>
+
+                    <hr class="my-3 text-muted opacity-25">
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                            id="editIsWatching{{ campaign.id }}" name="is_watching" {% if campaign.is_watching %}checked{% endif %}>
+                        <label class="form-check-label fw-medium" for="editIsWatching{{ campaign.id }}">Enable
+                            Watching</label>
+                    </div>
+
+                    <div class="mb-0">
+                        <label for="editInterval{{ campaign.id }}"
+                            class="form-label fw-medium small text-uppercase text-muted">Check Interval
+                            (Minutes)</label>
+                        <input type="number" class="form-control" id="editInterval{{ campaign.id }}"
+                            name="watch_interval_minutes" value="{{ campaign.watch_interval_minutes }}" min="5"
+                            step="1">
+                        <div class="form-text">How often to check for new posts.</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -196,11 +224,27 @@
                         <input type="text" class="form-control" id="campaignName" name="name"
                             placeholder="e.g. Competitor Analysis" required>
                     </div>
-                    <div class="mb-0">
+                    <div class="mb-3">
                         <label for="campaignDescription"
                             class="form-label fw-medium small text-uppercase text-muted">Description</label>
                         <textarea class="form-control" id="campaignDescription" name="description" rows="3"
                             placeholder="What are you tracking with this campaign?"></textarea>
+                    </div>
+
+                    <hr class="my-3 text-muted opacity-25">
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="createIsWatching"
+                            name="is_watching">
+                        <label class="form-check-label fw-medium" for="createIsWatching">Enable Watching</label>
+                    </div>
+
+                    <div class="mb-0">
+                        <label for="createInterval" class="form-label fw-medium small text-uppercase text-muted">Check
+                            Interval (Minutes)</label>
+                        <input type="number" class="form-control" id="createInterval" name="watch_interval_minutes"
+                            value="60" min="5" step="1">
+                        <div class="form-text">How often to check for new posts.</div>
                     </div>
                 </div>
                 <div class="modal-footer">

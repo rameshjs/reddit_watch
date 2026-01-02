@@ -20,8 +20,28 @@ def campaign_create(request):
     """Create a new campaign and return updated campaigns container"""
     name = request.POST.get('name')
     if name:
-        Campaign.objects.create(name=name, description=request.POST.get('description', ''))
+        is_watching = request.POST.get('is_watching') == 'on'
+        interval_val = request.POST.get('watch_interval_minutes', 60)
+        try:
+            interval = int(interval_val)
+        except ValueError:
+            interval = 60
+            
+        Campaign.objects.create(
+            name=name, 
+            description=request.POST.get('description', ''),
+            is_watching=is_watching,
+            watch_interval_minutes=interval
+        )
     
+    campaign.save()
+    
+    # Check if update came from detail page
+    if request.POST.get('source') == 'detail':
+        # Refetch to ensure optimizations (though single object is cheap)
+        campaign = get_object_or_404(Campaign.objects.prefetch_related('keywords__tags'), pk=pk)
+        return render(request, 'campaigns/campaign_detail.html', {'campaign': campaign})
+
     campaigns = Campaign.objects.all().prefetch_related('keywords')
     return render(request, 'campaigns/campaign_list.html#campaigns_container', {'campaigns': campaigns})
 
@@ -32,6 +52,18 @@ def campaign_update(request, pk):
     campaign = get_object_or_404(Campaign, pk=pk)
     campaign.name = request.POST.get('name', campaign.name)
     campaign.description = request.POST.get('description', campaign.description)
+    
+    # Handle checkbox for is_watching
+    campaign.is_watching = request.POST.get('is_watching') == 'on'
+    
+    # Handle watch_interval_minutes
+    interval = request.POST.get('watch_interval_minutes')
+    if interval:
+        try:
+            campaign.watch_interval_minutes = int(interval)
+        except ValueError:
+            pass # Keep existing value if invalid
+            
     campaign.save()
     
     campaigns = Campaign.objects.all().prefetch_related('keywords')

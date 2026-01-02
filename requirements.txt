@@ -3,3 +3,7 @@ Django==6.0
 sqlparse==0.5.5
 python-decouple==3.8
 django-bootstrap5==25.3
+celery==5.4.0
+django-celery-beat==2.7.0
+django-celery-results==2.5.1
+django-template-partials==24.4
