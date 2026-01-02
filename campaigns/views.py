@@ -1,18 +1,35 @@
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_http_methods
-from .models import Campaign, Keyword, Tag
+from .models import Campaign, Keyword, Tag, GlobalSettings
 
 
 def campaign_list(request):
     """Display all campaigns"""
     campaigns = Campaign.objects.all().prefetch_related('keywords')
-    return render(request, 'campaigns/campaign_list.html', {'campaigns': campaigns})
+    settings, _ = GlobalSettings.objects.get_or_create(
+        pk=1,
+        defaults={
+            'post_fetch_interval': 300,
+            'comment_fetch_interval': 360
+        }
+    )
+    return render(request, 'campaigns/campaign_list.html', {'campaigns': campaigns, 'settings': settings})
 
 
 def campaign_detail(request, pk):
     """Display campaign details with keywords and tags"""
-    campaign = get_object_or_404(Campaign.objects.prefetch_related('keywords__tags'), pk=pk)
-    return render(request, 'campaigns/campaign_detail.html', {'campaign': campaign})
+    campaign = get_object_or_404(
+        Campaign.objects.prefetch_related(
+            'keywords__tags',
+            'matches__keyword',
+            'matches__post',
+            'matches__comment'
+        ), 
+        pk=pk
+    )
+    # Get recent matches, ordered by most recent
+    matches = campaign.matches.select_related('keyword', 'post', 'comment').order_by('-created_at')[:50]
+    return render(request, 'campaigns/campaign_detail.html', {'campaign': campaign, 'matches': matches})
 
 
 @require_http_methods(["POST"])
@@ -37,7 +54,7 @@ def campaign_create(request):
             name=name, 
             description=request.POST.get('description', ''),
             is_watching=is_watching,
-            watch_interval_seconds=interval_seconds
+            match_interval_seconds=interval_seconds
         )
     
     # Check if update came from detail page
@@ -73,7 +90,7 @@ def campaign_update(request, pk):
         if total < 30:
             total = 30
             
-        campaign.watch_interval_seconds = total
+        campaign.match_interval_seconds = total
     except ValueError:
         pass # Keep existing value if invalid
             
@@ -175,3 +192,51 @@ def tag_delete(request, pk):
     # Refetch keyword to get updated tags
     keyword = get_object_or_404(Keyword.objects.select_related('campaign').prefetch_related('tags'), pk=keyword.pk)
     return render(request, 'campaigns/campaign_detail.html#keyword_card', {'campaign': campaign, 'keyword': keyword})
+
+
+def global_settings_view(request):
+    """Display global settings page"""
+    settings, created = GlobalSettings.objects.get_or_create(
+        pk=1,
+        defaults={
+            'post_fetch_interval': 300,
+            'comment_fetch_interval': 360
+        }
+    )
+    return render(request, 'campaigns/global_settings.html', {'settings': settings})
+
+
+@require_http_methods(["POST"])
+def global_settings_update(request):
+    """Update global settings and return updated page"""
+    settings = get_object_or_404(GlobalSettings, pk=1)
+    
+    # Handle post_fetch_interval
+    try:
+        h = int(request.POST.get('post_hours', 0) or 0)
+        m = int(request.POST.get('post_minutes', 0) or 0)
+        s = int(request.POST.get('post_seconds', 0) or 0)
+        total = (h * 3600) + (m * 60) + s
+        if total < 30:
+            total = 30
+        settings.post_fetch_interval = total
+    except ValueError:
+        pass
+    
+    # Handle comment_fetch_interval
+    try:
+        h = int(request.POST.get('comment_hours', 0) or 0)
+        m = int(request.POST.get('comment_minutes', 0) or 0)
+        s = int(request.POST.get('comment_seconds', 0) or 0)
+        total = (h * 3600) + (m * 60) + s
+        if total < 30:
+            total = 30
+        settings.comment_fetch_interval = total
+    except ValueError:
+        pass
+    
+    settings.save()
+    
+    # Return modal partial for HTMX requests
+    return render(request, 'campaigns/campaign_list.html#global_settings_modal', {'settings': settings})
+

@@ -42,18 +42,157 @@
         </div>
     </div>
 
-    {# Keywords Section Header #}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Keywords</h4>
-        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createKeywordModal">
-            <i class="bi bi-plus-circle me-2"></i>Add Keyword
-        </button>
-    </div>
+    {# Tabbed Interface for Keywords and Matched Posts #}
+    <ul class="nav nav-tabs mb-3" id="campaignTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if matches|length == 0 %}active{% endif %}" id="keywords-tab"
+                data-bs-toggle="tab" data-bs-target="#keywords" type="button" role="tab">
+                <i class="bi bi-tag me-2"></i>Keywords
+                <span class="badge bg-secondary ms-2">{{ campaign.keywords.count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if matches|length > 0 %}active{% endif %}" id="matches-tab" data-bs-toggle="tab"
+                data-bs-target="#matches" type="button" role="tab">
+                <i class="bi bi-search me-2"></i>Matched Posts
+                <span class="badge bg-primary ms-2">{{ matches|length }}</span>
+            </button>
+        </li>
+    </ul>
 
-    {# Keywords Container #}
-    <div id="keywords_container">
-        {% partial keywords_container %}
+    <div class="tab-content" id="campaignTabContent">
+        {# Keywords Tab #}
+        <div class="tab-pane fade {% if matches|length == 0 %}show active{% endif %}" id="keywords" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Keywords</h4>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createKeywordModal">
+                    <i class="bi bi-plus-circle me-2"></i>Add Keyword
+                </button>
+            </div>
+
+            {# Keywords Container #}
+            <div id="keywords_container">
+                {% partial keywords_container %}
+            </div>
+        </div>
+
+        {# Matched Posts Tab #}
+        <div class="tab-pane fade {% if matches|length > 0 %}show active{% endif %}" id="matches" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Matched Posts</h4>
+                {% if matches %}
+                <div class="btn-group btn-group-sm" role="group">
+                    <input type="radio" class="btn-check" name="matchFilter" id="filterAll" checked autocomplete="off">
+                    <label class="btn btn-outline-primary" for="filterAll" onclick="filterMatches('all')">
+                        <i class="bi bi-list-ul me-1"></i>All
+                    </label>
+
+                    <input type="radio" class="btn-check" name="matchFilter" id="filterPosts" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="filterPosts" onclick="filterMatches('post')">
+                        <i class="bi bi-file-post me-1"></i>Posts Only
+                    </label>
+
+                    <input type="radio" class="btn-check" name="matchFilter" id="filterComments" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="filterComments" onclick="filterMatches('comment')">
+                        <i class="bi bi-chat-left-text me-1"></i>Comments Only
+                    </label>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if matches %}
+            <div class="card shadow-sm">
+                <div class="list-group list-group-flush">
+                    {% for match in matches %}
+                    <div class="list-group-item match-item"
+                        data-match-type="{% if match.post %}post{% else %}comment{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="badge bg-secondary">{{ match.keyword.name }}</span>
+                                    {% if match.post %}
+                                    <span class="badge bg-info text-dark">
+                                        <i class="bi bi-file-post me-1"></i>Post
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-chat-left-text me-1"></i>Comment
+                                    </span>
+                                    {% endif %}
+                                    <small class="text-muted">{{ match.created_at|timesince }} ago</small>
+                                </div>
+
+                                {% if match.post %}
+                                <h6 class="mb-1">
+                                    <a href="https://reddit.com{{ match.post.permalink }}" target="_blank"
+                                        class="text-decoration-none text-dark">
+                                        {{ match.post.title }}
+                                        <i class="bi bi-box-arrow-up-right small ms-1"></i>
+                                    </a>
+                                </h6>
+                                <p class="text-muted small mb-1">
+                                    <i class="bi bi-reddit me-1"></i>r/{{ match.post.subreddit }} •
+                                    by u/{{ match.post.author }} •
+                                    {{ match.post.score }} points •
+                                    {{ match.post.num_comments }} comments
+                                </p>
+                                {% if match.post.selftext %}
+                                <div class="mt-2">
+                                    <p class="text-muted small mb-0" style="white-space: pre-wrap;">{{
+                                        match.post.selftext }}</p>
+                                </div>
+                                {% endif %}
+                                {% else %}
+                                <div class="mb-1">
+                                    <a href="https://reddit.com{{ match.comment.permalink }}" target="_blank"
+                                        class="text-decoration-none text-dark">
+                                        <i class="bi bi-box-arrow-up-right small me-1"></i>
+                                        View Comment on Reddit
+                                    </a>
+                                </div>
+                                <p class="text-muted small mb-1">
+                                    <i class="bi bi-reddit me-1"></i>r/{{ match.comment.subreddit }} •
+                                    by u/{{ match.comment.author }} •
+                                    {{ match.comment.score }} points
+                                </p>
+                                <div class="mt-2 p-2 bg-light rounded">
+                                    <p class="mb-0 small" style="white-space: pre-wrap;">{{ match.comment.body }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-search display-4 text-muted"></i>
+                    <p class="text-muted mt-3 mb-0">No matches found yet. Matches will appear here when keywords are
+                        found
+                        in Reddit posts or comments.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
     </div>
+</div>
+
+{# JavaScript for filtering matches #}
+<script>
+    function filterMatches(type) {
+        const items = document.querySelectorAll('.match-item');
+        items.forEach(item => {
+            if (type === 'all') {
+                item.style.display = '';
+            } else {
+                item.style.display = item.dataset.matchType === type ? '' : 'none';
+            }
+        });
+    }
+</script>
+</div>
 </div>
 
 {# Explicitly render CREATE keyword modal #}
@@ -317,7 +456,7 @@
                         <label class="form-check-label fw-medium" for="detailIsWatching">Enable Watching</label>
                     </div>
 
-                    <div class="mb-0">
+                    <div class="mb-0" data-interval-group>
                         <label class="form-label fw-medium small text-uppercase text-muted">Check Interval</label>
                         <div class="row g-2">
                             <div class="col-4">
@@ -344,7 +483,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-text mt-1">Minimum 30 seconds.</div>
+                        <div class="form-text mt-1">
+                            <span data-interval-preview class="text-primary fw-medium"></span>
+                            <span class="text-muted"> • Minimum 30 seconds</span>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

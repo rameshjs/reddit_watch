@@ -24,6 +24,9 @@
     {# htmx for dynamic partial updates #}
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 
+    {# Moment.js for time humanization #}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -40,7 +43,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="{% url 'campaigns:campaign_list' %}">Campaigns</a>
+                        <a class="nav-link" href="{% url 'campaigns:campaign_list' %}">Campaigns</a>
                     </li>
                 </ul>
             </div>
@@ -73,7 +76,56 @@
             document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
             document.body.classList.remove('modal-open');
             document.body.style.removeProperty('padding-right');
+
+            // Reinitialize interval preview after HTMX swap
+            initializeIntervalPreview();
         });
+
+        // Function to humanize time interval
+        function humanizeInterval(hours, minutes, seconds) {
+            const totalSeconds = (parseInt(hours) || 0) * 3600 + (parseInt(minutes) || 0) * 60 + (parseInt(seconds) || 0);
+            if (totalSeconds < 30) return 'Minimum 30 seconds';
+
+            const duration = moment.duration(totalSeconds, 'seconds');
+            const parts = [];
+
+            if (duration.hours() > 0) parts.push(duration.hours() + ' hour' + (duration.hours() > 1 ? 's' : ''));
+            if (duration.minutes() > 0) parts.push(duration.minutes() + ' minute' + (duration.minutes() > 1 ? 's' : ''));
+            if (duration.seconds() > 0) parts.push(duration.seconds() + ' second' + (duration.seconds() > 1 ? 's' : ''));
+
+            if (parts.length === 0) return 'Not set';
+            if (parts.length === 1) return 'Every ' + parts[0];
+            if (parts.length === 2) return 'Every ' + parts.join(' and ');
+            return 'Every ' + parts.slice(0, -1).join(', ') + ', and ' + parts[parts.length - 1];
+        }
+
+        // Initialize interval preview functionality
+        function initializeIntervalPreview() {
+            // Handle all interval input groups
+            document.querySelectorAll('[data-interval-group]').forEach(group => {
+                const previewElement = group.querySelector('[data-interval-preview]');
+                if (!previewElement) return;
+
+                const inputs = group.querySelectorAll('input[type="number"]');
+
+                const updatePreview = () => {
+                    const hours = group.querySelector('[name*="hours"]')?.value || 0;
+                    const minutes = group.querySelector('[name*="minutes"]')?.value || 0;
+                    const seconds = group.querySelector('[name*="seconds"]')?.value || 0;
+                    previewElement.textContent = humanizeInterval(hours, minutes, seconds);
+                };
+
+                inputs.forEach(input => {
+                    input.addEventListener('input', updatePreview);
+                });
+
+                // Initial update
+                updatePreview();
+            });
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initializeIntervalPreview);
     </script>
 
     {% block extra_js %}{% endblock %}

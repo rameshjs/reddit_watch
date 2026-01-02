@@ -4,6 +4,10 @@ from . import views
 app_name = 'campaigns'
 
 urlpatterns = [
+    # Global Settings
+    path('settings/', views.global_settings_view, name='global_settings'),
+    path('settings/update/', views.global_settings_update, name='global_settings_update'),
+    
     # Campaign URLs
     path('', views.campaign_list, name='campaign_list'),
     path('<int:pk>/', views.campaign_detail, name='campaign_detail'),
