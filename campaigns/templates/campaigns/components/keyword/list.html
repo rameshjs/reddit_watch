@@ -1,0 +1,13 @@
+{# Keywords Container Component #}
+{% if campaign.keywords.all %}
+<div class="row g-3" id="keywords_list">
+    {% for keyword in campaign.keywords.all %}
+    {% include 'campaigns/components/keyword/card.html' %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-tag display-3 text-muted"></i>
+    <p class="text-muted mt-3">No keywords yet. Add your first keyword to start monitoring!</p>
+</div>
+{% endif %}

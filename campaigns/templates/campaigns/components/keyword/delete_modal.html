@@ -1,0 +1,22 @@
+{# Delete Keyword Modal Component #}
+<div class="modal fade" id="deleteKeywordModal{{ keyword.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h6 class="modal-title">Delete Keyword?</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form data-ajax action="{% url 'campaigns:keyword_delete_api' keyword.pk %}" method="POST"
+                data-target="#keywords_container" data-swap="innerHTML">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="mb-0">Delete <strong>{{ keyword.name }}</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

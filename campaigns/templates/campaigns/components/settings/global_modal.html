@@ -1,0 +1,107 @@
+{% load campaign_tags %}
+{# Global Settings Modal Component #}
+<div class="modal fade" id="globalSettingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Global Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form data-ajax action="{% url 'campaigns:global_settings_update_api' %}" method="POST"
+                data-target="#globalSettingsModal" data-swap="outerHTML">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="text-muted small mb-4">Configure global scheduler intervals for Reddit data ingestion from
+                        r/all.</p>
+
+                    {# Post Fetch Interval #}
+                    <div class="mb-4" data-interval-group>
+                        <label class="form-label fw-medium text-uppercase text-muted small">Post Fetch Interval</label>
+                        <p class="text-muted small mb-2">How often to fetch new posts from r/all</p>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" name="post_hours"
+                                        value="{{ settings.post_fetch_interval|get_hours }}" min="0" placeholder="0">
+                                    <span class="input-group-text text-muted">h</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" name="post_minutes"
+                                        value="{{ settings.post_fetch_interval|get_minutes }}" min="0" max="59"
+                                        placeholder="0">
+                                    <span class="input-group-text text-muted">m</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" name="post_seconds"
+                                        value="{{ settings.post_fetch_interval|get_seconds }}" min="0" max="59"
+                                        placeholder="0">
+                                    <span class="input-group-text text-muted">s</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text mt-1">
+                            <span data-interval-preview class="text-primary fw-medium"></span>
+                            <span class="text-muted"> • Minimum 30 seconds</span>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    {# Comment Fetch Interval #}
+                    <div class="mb-0" data-interval-group>
+                        <label class="form-label fw-medium text-uppercase text-muted small">Comment Fetch
+                            Interval</label>
+                        <p class="text-muted small mb-2">How often to fetch new comments from r/all</p>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" name="comment_hours"
+                                        value="{{ settings.comment_fetch_interval|get_hours }}" min="0" placeholder="0">
+                                    <span class="input-group-text text-muted">h</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" name="comment_minutes"
+                                        value="{{ settings.comment_fetch_interval|get_minutes }}" min="0" max="59"
+                                        placeholder="0">
+                                    <span class="input-group-text text-muted">m</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" name="comment_seconds"
+                                        value="{{ settings.comment_fetch_interval|get_seconds }}" min="0" max="59"
+                                        placeholder="0">
+                                    <span class="input-group-text text-muted">s</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text mt-1">
+                            <span data-interval-preview class="text-primary fw-medium"></span>
+                            <span class="text-muted"> • Minimum 30 seconds</span>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info d-flex align-items-start mt-4 mb-0" role="alert">
+                        <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+                        <div class="small">
+                            <strong>Note:</strong> Post and comment fetch intervals must differ by at least 60 seconds
+                            to avoid rate limiting issues.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light text-muted" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-2"></i>Save Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

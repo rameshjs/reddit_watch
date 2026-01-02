@@ -73,7 +73,7 @@
 
             {# Keywords Container #}
             <div id="keywords_container">
-                {% partial keywords_container %}
+                {% include 'campaigns/components/keyword/list.html' %}
             </div>
         </div>
 
@@ -97,8 +97,10 @@
                             <label class="form-label small fw-bold text-muted mb-1">Type</label>
                             <select name="type" class="form-select form-select-sm">
                                 <option value="all" {% if filters.type == 'all' %}selected{% endif %}>All Types</option>
-                                <option value="post" {% if filters.type == 'post' %}selected{% endif %}>Posts Only</option>
-                                <option value="comment" {% if filters.type == 'comment' %}selected{% endif %}>Comments Only</option>
+                                <option value="post" {% if filters.type == 'post' %}selected{% endif %}>Posts Only
+                                </option>
+                                <option value="comment" {% if filters.type == 'comment' %}selected{% endif %}>Comments
+                                    Only</option>
                             </select>
                         </div>
                         <div class="col-md-2">
@@ -127,434 +129,125 @@
             {% if matches %}
             <div class="card shadow-sm">
                 <div class="list-group list-group-flush">
-                    <div class="list-group list-group-flush">
-                        {% for match in matches %}
-                        <div class="list-group-item match-item">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div class="flex-grow-1">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <span class="badge bg-secondary">{{ match.keyword.name }}</span>
-                                        {% if match.post %}
-                                        <span class="badge bg-info text-dark">
-                                            <i class="bi bi-file-post me-1"></i>Post
-                                        </span>
-                                        {% else %}
-                                        <span class="badge bg-warning text-dark">
-                                            <i class="bi bi-chat-left-text me-1"></i>Comment
-                                        </span>
-                                        {% endif %}
-                                        <small class="text-muted">{{ match.created_at|timesince }} ago</small>
-                                    </div>
-
+                    {% for match in matches %}
+                    <div class="list-group-item match-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="badge bg-secondary">{{ match.keyword.name }}</span>
                                     {% if match.post %}
-                                    <h6 class="mb-1">
-                                        <a href="https://reddit.com{{ match.post.permalink }}" target="_blank"
-                                            class="text-decoration-none text-dark">
-                                            {{ match.post.title }}
-                                            <i class="bi bi-box-arrow-up-right small ms-1"></i>
-                                        </a>
-                                    </h6>
-                                    <p class="text-muted small mb-1">
-                                        <i class="bi bi-reddit me-1"></i>r/{{ match.post.subreddit }} •
-                                        by u/{{ match.post.author }} •
-                                        {{ match.post.score }} points •
-                                        {{ match.post.num_comments }} comments
-                                    </p>
-                                    {% if match.post.selftext %}
-                                    <div class="mt-2">
-                                        <p class="text-muted small mb-0" style="white-space: pre-wrap;">{{ match.match_text|default:match.post.selftext|truncatechars:300 }}</p>
-                                    </div>
-                                    {% endif %}
+                                    <span class="badge bg-info text-dark">
+                                        <i class="bi bi-file-post me-1"></i>Post
+                                    </span>
                                     {% else %}
-                                    <div class="mb-1">
-                                        <a href="https://reddit.com{{ match.comment.permalink }}" target="_blank"
-                                            class="text-decoration-none text-dark">
-                                            <i class="bi bi-box-arrow-up-right small me-1"></i>
-                                            View Comment on Reddit
-                                        </a>
-                                    </div>
-                                    <p class="text-muted small mb-1">
-                                        <i class="bi bi-reddit me-1"></i>r/{{ match.comment.subreddit }} •
-                                        by u/{{ match.comment.author }} •
-                                        {{ match.comment.score }} points
-                                    </p>
-                                    <div class="mt-2 p-2 bg-light rounded">
-                                        <p class="mb-0 small" style="white-space: pre-wrap;">{{ match.match_text|default:match.comment.body|truncatechars:300 }}</p>
-                                    </div>
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-chat-left-text me-1"></i>Comment
+                                    </span>
                                     {% endif %}
+                                    <small class="text-muted">{{ match.created_at|timesince }} ago</small>
                                 </div>
+
+                                {% if match.post %}
+                                <h6 class="mb-1">
+                                    <a href="https://reddit.com{{ match.post.permalink }}" target="_blank"
+                                        class="text-decoration-none text-dark">
+                                        {{ match.post.title }}
+                                        <i class="bi bi-box-arrow-up-right small ms-1"></i>
+                                    </a>
+                                </h6>
+                                <p class="text-muted small mb-1">
+                                    <i class="bi bi-reddit me-1"></i>r/{{ match.post.subreddit }} •
+                                    by u/{{ match.post.author }} •
+                                    {{ match.post.score }} points •
+                                    {{ match.post.num_comments }} comments
+                                </p>
+                                {% if match.post.selftext %}
+                                <div class="mt-2">
+                                    <p class="text-muted small mb-0" style="white-space: pre-wrap;">{{ match.match_text|default:match.post.selftext|truncatechars:300 }}</p>
+                                </div>
+                                {% endif %}
+                                {% else %}
+                                <div class="mb-1">
+                                    <a href="https://reddit.com{{ match.comment.permalink }}" target="_blank"
+                                        class="text-decoration-none text-dark">
+                                        <i class="bi bi-box-arrow-up-right small me-1"></i>
+                                        View Comment on Reddit
+                                    </a>
+                                </div>
+                                <p class="text-muted small mb-1">
+                                    <i class="bi bi-reddit me-1"></i>r/{{ match.comment.subreddit }} •
+                                    by u/{{ match.comment.author }} •
+                                    {{ match.comment.score }} points
+                                </p>
+                                <div class="mt-2 p-2 bg-light rounded">
+                                    <p class="mb-0 small" style="white-space: pre-wrap;">{{ match.match_text|default:match.comment.body|truncatechars:300 }}</p>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
-                        {% endfor %}
                     </div>
-
-                    {# Pagination #}
-                    {% if matches.has_other_pages %}
-                    <div class="card-footer bg-light">
-                        <nav aria-label="Matches pagination">
-                            <ul class="pagination pagination-sm justify-content-center mb-0">
-                                {% if matches.has_previous %}
-                                <li class="page-item">
-                                    <a class="page-link"
-                                        href="?page={{ matches.previous_page_number }}{% if filters.keyword %}&keyword={{ filters.keyword }}{% endif %}{% if filters.type != 'all' %}&type={{ filters.type }}{% endif %}{% if filters.subreddit %}&subreddit={{ filters.subreddit }}{% endif %}{% if filters.date_from %}&date_from={{ filters.date_from }}{% endif %}{% if filters.date_to %}&date_to={{ filters.date_to }}{% endif %}">Previous</a>
-                                </li>
-                                {% else %}
-                                <li class="page-item disabled">
-                                    <span class="page-link">Previous</span>
-                                </li>
-                                {% endif %}
-
-                                <li class="page-item disabled">
-                                    <span class="page-link text-muted">Page {{ matches.number }} of {{ matches.paginator.num_pages }}</span>
-                                </li>
-
-                                {% if matches.has_next %}
-                                <li class="page-item">
-                                    <a class="page-link"
-                                        href="?page={{ matches.next_page_number }}{% if filters.keyword %}&keyword={{ filters.keyword }}{% endif %}{% if filters.type != 'all' %}&type={{ filters.type }}{% endif %}{% if filters.subreddit %}&subreddit={{ filters.subreddit }}{% endif %}{% if filters.date_from %}&date_from={{ filters.date_from }}{% endif %}{% if filters.date_to %}&date_to={{ filters.date_to }}{% endif %}">Next</a>
-                                </li>
-                                {% else %}
-                                <li class="page-item disabled">
-                                    <span class="page-link">Next</span>
-                                </li>
-                                {% endif %}
-                            </ul>
-                        </nav>
-                    </div>
-                    {% endif %}
+                    {% endfor %}
                 </div>
-                {% else %}
-                <div class="card shadow-sm">
-                    <div class="card-body text-center py-5">
-                        <i class="bi bi-search display-4 text-muted"></i>
-                        {% if campaign.matches.exists %}
-                        {# Logic to check if its just filters returning empty or no matches at all #}
-                        <h5 class="mt-3">No matches found with these filters</h5>
-                        <p class="text-muted mb-3">Try adjusting your filters to see more results.</p>
-                        <a href="{% url 'campaigns:campaign_detail' campaign.pk %}"
-                            class="btn btn-outline-primary btn-sm">Clear Filters</a>
-                        {% else %}
-                        <h5 class="mt-3">No matches yet</h5>
-                        <p class="text-muted mb-0">Matches will appear here when keywords are found in specific
-                            Reddit posts or comments. Make sure "Watching" is enabled in settings.</p>
-                        {% endif %}
-                    </div>
+
+                {# Pagination #}
+                {% if matches.has_other_pages %}
+                <div class="card-footer bg-light">
+                    <nav aria-label="Matches pagination">
+                        <ul class="pagination pagination-sm justify-content-center mb-0">
+                            {% if matches.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link"
+                                    href="?page={{ matches.previous_page_number }}{% if filters.keyword %}&keyword={{ filters.keyword }}{% endif %}{% if filters.type != 'all' %}&type={{ filters.type }}{% endif %}{% if filters.subreddit %}&subreddit={{ filters.subreddit }}{% endif %}{% if filters.date_from %}&date_from={{ filters.date_from }}{% endif %}{% if filters.date_to %}&date_to={{ filters.date_to }}{% endif %}">Previous</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Previous</span>
+                            </li>
+                            {% endif %}
+
+                            <li class="page-item disabled">
+                                <span class="page-link text-muted">Page {{ matches.number }} of {{
+                                    matches.paginator.num_pages }}</span>
+                            </li>
+
+                            {% if matches.has_next %}
+                            <li class="page-item">
+                                <a class="page-link"
+                                    href="?page={{ matches.next_page_number }}{% if filters.keyword %}&keyword={{ filters.keyword }}{% endif %}{% if filters.type != 'all' %}&type={{ filters.type }}{% endif %}{% if filters.subreddit %}&subreddit={{ filters.subreddit }}{% endif %}{% if filters.date_from %}&date_from={{ filters.date_from }}{% endif %}{% if filters.date_to %}&date_to={{ filters.date_to }}{% endif %}">Next</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Next</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
                 </div>
                 {% endif %}
             </div>
-        </div>
-    </div>
-
-    {# JavaScript for filters #}
-    {# No JS needed now, handled by GET params #}
-</div>
-</div>
-
-{# Explicitly render CREATE keyword modal #}
-{% partial create_keyword_modal %}
-
-{# --- INLINE PARTIALS --- #}
-
-{# Container partial #}
-{% partialdef keywords_container %}
-{% if campaign.keywords.all %}
-{% partial keywords_list %}
-{% else %}
-<div class="text-center py-5">
-    <i class="bi bi-tag display-3 text-muted"></i>
-    <p class="text-muted mt-3">No keywords yet. Add your first keyword to start monitoring!</p>
-</div>
-{% endif %}
-{% endpartialdef %}
-
-{# Keywords List #}
-{% partialdef keywords_list %}
-<div class="row g-3" id="keywords_list">
-    {% for keyword in campaign.keywords.all %}
-    {% partial keyword_card %}
-    {% endfor %}
-</div>
-{% endpartialdef %}
-
-{# Keyword Card #}
-{% partialdef keyword_card %}
-<div class="col-md-6" id="keyword_card_{{ keyword.id }}">
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <div class="flex-grow-1">
-                    <h5 class="card-title mb-1">{{ keyword.name }}</h5>
-                    <p class="card-text text-muted small mb-2">{{ keyword.description }}</p>
-                </div>
-                <div class="btn-group btn-group-sm ms-2">
-                    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
-                        data-bs-target="#editKeywordModal{{ keyword.id }}">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal"
-                        data-bs-target="#deleteKeywordModal{{ keyword.id }}">
-                        <i class="bi bi-trash"></i>
-                    </button>
+            {% else %}
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-search display-4 text-muted"></i>
+                    {% if campaign.matches.exists %}
+                    <h5 class="mt-3">No matches found with these filters</h5>
+                    <p class="text-muted mb-3">Try adjusting your filters to see more results.</p>
+                    <a href="{% url 'campaigns:campaign_detail' campaign.pk %}"
+                        class="btn btn-outline-primary btn-sm">Clear Filters</a>
+                    {% else %}
+                    <h5 class="mt-3">No matches yet</h5>
+                    <p class="text-muted mb-0">Matches will appear here when keywords are found in specific
+                        Reddit posts or comments. Make sure "Watching" is enabled in settings.</p>
+                    {% endif %}
                 </div>
             </div>
-
-            {# Tags for this keyword #}
-            <div class="d-flex flex-wrap gap-1 mb-2">
-                {% for tag in keyword.tags.all %}
-                <span class="badge bg-secondary position-relative" data-bs-toggle="tooltip"
-                    title="{{ tag.description }}">
-                    {{ tag.name }}
-                    <button type="button"
-                        class="btn-close btn-close-white position-absolute top-0 start-100 translate-middle p-1"
-                        style="font-size: 0.5rem;" data-bs-toggle="modal"
-                        data-bs-target="#deleteTagModal{{ tag.id }}"></button>
-                </span>
-                {# Render Delete Tag Modal #}
-                {% partial delete_tag_modal %}
-                {% empty %}
-                <span class="text-muted small">No tags</span>
-                {% endfor %}
-            </div>
-
-            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
-                data-bs-target="#createTagModal{{ keyword.id }}">
-                <i class="bi bi-tag me-1"></i>Add Tag
-            </button>
-        </div>
-    </div>
-
-    {# Render Modals for this keyword #}
-    {% partial edit_keyword_modal %}
-    {% partial delete_keyword_modal %}
-    {% partial create_tag_modal %}
-</div>
-{% endpartialdef %}
-
-{# --- MODAL DEFINITIONS --- #}
-
-{# Edit keyword modal #}
-{% partialdef edit_keyword_modal %}
-<div class="modal fade" id="editKeywordModal{{ keyword.id }}" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Keyword</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form hx-post="{% url 'campaigns:keyword_update' keyword.pk %}" hx-target="#keyword_card_{{ keyword.id }}"
-                hx-swap="outerHTML">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" class="form-control" name="name" value="{{ keyword.name }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" name="description" rows="2">{{ keyword.description }}</textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
-                </div>
-            </form>
+            {% endif %}
         </div>
     </div>
 </div>
-{% endpartialdef %}
 
-{# Delete keyword modal #}
-{% partialdef delete_keyword_modal %}
-<div class="modal fade" id="deleteKeywordModal{{ keyword.id }}" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content">
-            <div class="modal-header bg-danger">
-                <h6 class="modal-title">Delete Keyword?</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form hx-post="{% url 'campaigns:keyword_delete' keyword.pk %}" hx-target="#keywords_container"
-                hx-swap="innerHTML">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <p class="mb-0">Delete <strong>{{ keyword.name }}</strong>?</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{% endpartialdef %}
-
-{# Create tag modal #}
-{% partialdef create_tag_modal %}
-<div class="modal fade" id="createTagModal{{ keyword.id }}" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h6 class="modal-title">Add Tag</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form hx-post="{% url 'campaigns:tag_create' keyword.pk %}" hx-target="#keyword_card_{{ keyword.id }}"
-                hx-swap="outerHTML">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" class="form-control form-control-sm" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <input type="text" class="form-control form-control-sm" name="description">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm">Add</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{% endpartialdef %}
-
-{# Delete tag modal #}
-{% partialdef delete_tag_modal %}
-<div class="modal fade" id="deleteTagModal{{ tag.id }}" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content">
-            <div class="modal-header bg-danger">
-                <h6 class="modal-title">Delete Tag?</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form hx-post="{% url 'campaigns:tag_delete' tag.pk %}" hx-target="#keyword_card_{{ keyword.id }}"
-                hx-swap="outerHTML">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <p class="mb-0">Delete tag <strong>{{ tag.name }}</strong>?</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{% endpartialdef %}
-
-{# Create keyword modal #}
-{% partialdef create_keyword_modal %}
-<div class="modal fade" id="createKeywordModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add Keyword</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form hx-post="{% url 'campaigns:keyword_create' campaign.pk %}" hx-target="#keywords_container"
-                hx-swap="innerHTML">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" class="form-control" name="name" placeholder="e.g., Python, Django, AI"
-                            required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" name="description" rows="2"
-                            placeholder="What to look for..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Keyword</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{% endpartialdef %}
-
-
-{# Edit Campaign Modal for Detail Page #}
-{% partialdef edit_campaign_modal %}
-<div class="modal fade" id="editCampaignModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Campaign Settings</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form hx-post="{% url 'campaigns:campaign_update' campaign.pk %}" hx-target="body" hx-swap="outerHTML">
-                {% csrf_token %}
-                <input type="hidden" name="source" value="detail">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-medium small text-uppercase text-muted">Name</label>
-                        <input type="text" class="form-control" name="name" value="{{ campaign.name }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-medium small text-uppercase text-muted">Description</label>
-                        <textarea class="form-control" name="description" rows="3">{{ campaign.description }}</textarea>
-                    </div>
-
-                    <hr class="my-3 text-muted opacity-25">
-
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" role="switch" id="detailIsWatching"
-                            name="is_watching" {% if campaign.is_watching %}checked{% endif %}>
-                        <label class="form-check-label fw-medium" for="detailIsWatching">Enable Watching</label>
-                    </div>
-
-                    <div class="mb-0" data-interval-group>
-                        <label class="form-label fw-medium small text-uppercase text-muted">Check Interval</label>
-                        <div class="row g-2">
-                            <div class="col-4">
-                                <div class="input-group input-group-sm">
-                                    <input type="number" class="form-control" name="hours"
-                                        value="{{ campaign.match_interval_seconds|get_hours }}" min="0" placeholder="0">
-                                    <span class="input-group-text text-muted">h</span>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="input-group input-group-sm">
-                                    <input type="number" class="form-control" name="minutes"
-                                        value="{{ campaign.match_interval_seconds|get_minutes }}" min="0" max="59"
-                                        placeholder="0">
-                                    <span class="input-group-text text-muted">m</span>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="input-group input-group-sm">
-                                    <input type="number" class="form-control" name="seconds"
-                                        value="{{ campaign.match_interval_seconds|get_seconds }}" min="0" max="59"
-                                        placeholder="0">
-                                    <span class="input-group-text text-muted">s</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-text mt-1">
-                            <span data-interval-preview class="text-primary fw-medium"></span>
-                            <span class="text-muted"> • Minimum 30 seconds</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light text-muted" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{% endpartialdef %}
-
-{# Explicitly render Edit Modal #}
-{% partial edit_campaign_modal %}
+{# Modals #}
+{% include 'campaigns/components/keyword/create_modal.html' %}
+{% include 'campaigns/components/campaign/detail_edit_modal.html' %}
 
 {% endblock %}

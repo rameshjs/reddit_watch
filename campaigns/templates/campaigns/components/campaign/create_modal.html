@@ -1,0 +1,72 @@
+{# Create Campaign Modal Component #}
+<div class="modal fade" id="createCampaignModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Campaign</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form data-ajax action="{% url 'campaigns:campaign_create_api' %}" method="POST"
+                data-target="#campaigns_container" data-swap="innerHTML">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="campaignName"
+                            class="form-label fw-medium small text-uppercase text-muted">Name</label>
+                        <input type="text" class="form-control" id="campaignName" name="name"
+                            placeholder="e.g. Competitor Analysis" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="campaignDescription"
+                            class="form-label fw-medium small text-uppercase text-muted">Description</label>
+                        <textarea class="form-control" id="campaignDescription" name="description" rows="3"
+                            placeholder="What are you tracking with this campaign?"></textarea>
+                    </div>
+
+                    <hr class="my-3 text-muted opacity-25">
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="createIsWatching"
+                            name="is_watching">
+                        <label class="form-check-label fw-medium" for="createIsWatching">Enable Watching</label>
+                    </div>
+
+                    <div class="mb-0" data-interval-group>
+                        <label class="form-label fw-medium small text-uppercase text-muted">Check Interval</label>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="createHours" name="hours" value="1"
+                                        min="0" placeholder="0">
+                                    <span class="input-group-text text-muted">h</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="createMinutes" name="minutes"
+                                        value="0" min="0" max="59" placeholder="0">
+                                    <span class="input-group-text text-muted">m</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="createSeconds" name="seconds"
+                                        value="0" min="0" max="59" placeholder="0">
+                                    <span class="input-group-text text-muted">s</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text mt-1">
+                            <span data-interval-preview class="text-primary fw-medium"></span>
+                            <span class="text-muted"> • Minimum 30 seconds</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light text-muted" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Campaign</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

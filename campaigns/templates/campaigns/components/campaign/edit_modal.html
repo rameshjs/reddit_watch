@@ -1,0 +1,78 @@
+{% load campaign_tags %}
+{# Edit Campaign Modal Component #}
+<div class="modal fade" id="editCampaignModal{{ campaign.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Campaign</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form data-ajax action="{% url 'campaigns:campaign_update_api' campaign.pk %}" method="POST"
+                data-target="#campaigns_container" data-swap="innerHTML">
+                {% csrf_token %}
+                <div class="modal-body text-start">
+                    <div class="mb-3">
+                        <label for="editName{{ campaign.id }}"
+                            class="form-label fw-medium small text-uppercase text-muted">Name</label>
+                        <input type="text" class="form-control" id="editName{{ campaign.id }}" name="name"
+                            value="{{ campaign.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescription{{ campaign.id }}"
+                            class="form-label fw-medium small text-uppercase text-muted">Description</label>
+                        <textarea class="form-control" id="editDescription{{ campaign.id }}" name="description"
+                            rows="3">{{ campaign.description }}</textarea>
+                    </div>
+
+                    <hr class="my-3 text-muted opacity-25">
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                            id="editIsWatching{{ campaign.id }}" name="is_watching" {% if campaign.is_watching %}
+                            checked {% endif %}>
+                        <label class="form-check-label fw-medium" for="editIsWatching{{ campaign.id }}">Enable
+                            Watching</label>
+                    </div>
+
+                    <div class="mb-0" data-interval-group>
+                        <label class="form-label fw-medium small text-uppercase text-muted">Check Interval</label>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="editHours{{ campaign.id }}"
+                                        name="hours" value="{{ campaign.match_interval_seconds|get_hours }}" min="0"
+                                        placeholder="0">
+                                    <span class="input-group-text text-muted">h</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="editMinutes{{ campaign.id }}"
+                                        name="minutes" value="{{ campaign.match_interval_seconds|get_minutes }}" min="0"
+                                        max="59" placeholder="0">
+                                    <span class="input-group-text text-muted">m</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="editSeconds{{ campaign.id }}"
+                                        name="seconds" value="{{ campaign.match_interval_seconds|get_seconds }}" min="0"
+                                        max="59" placeholder="0">
+                                    <span class="input-group-text text-muted">s</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text mt-1">
+                            <span data-interval-preview class="text-primary fw-medium"></span>
+                            <span class="text-muted"> • Minimum 30 seconds</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light text-muted" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

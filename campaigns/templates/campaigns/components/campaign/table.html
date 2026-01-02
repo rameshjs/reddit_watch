@@ -1,0 +1,25 @@
+{% load campaign_tags %}
+{# Campaigns Table Component #}
+{% if campaigns %}
+<div id="campaigns_table" class="card shadow-sm overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th scope="col" class="ps-3" style="width: 30%;">Name</th>
+                    <th scope="col" style="width: 40%;">Description</th>
+                    <th scope="col" class="text-center" style="width: 15%;">Keywords</th>
+                    <th scope="col" class="text-end pe-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for campaign in campaigns %}
+                {% include 'campaigns/components/campaign/row.html' %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+{% include 'campaigns/components/campaign/empty_state.html' %}
+{% endif %}

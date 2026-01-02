@@ -3,6 +3,7 @@ Celery tasks for Reddit data ingestion and campaign keyword matching.
 """
 import logging
 import json
+from datetime import datetime, timezone as datetime_timezone
 from datetime import timedelta
 from typing import Optional, Dict, Any
 
@@ -11,7 +12,7 @@ import requests
 from celery import shared_task
 from decouple import config
 from django.conf import settings
-from django.utils import timezone
+from django.utils import timezone as django_timezone
 
 from .models import Campaign, RedditPost, RedditComment, GlobalSettings, CampaignMatch
 
@@ -56,7 +57,7 @@ def update_progress(
         progress = json.loads(progress_raw) if progress_raw else {}
         
         progress[data_type] = {
-            'last_fetch_at': timezone.now().isoformat(),
+            'last_fetch_at': django_timezone.now().isoformat(),
             'last_count': count,
             'new_count': new_count,
             'total': total or progress.get(data_type, {}).get('total', 0),
@@ -132,10 +133,9 @@ def handle_stale_id(
     return was_reset
 
 
-def parse_reddit_timestamp(timestamp: float) -> timezone.datetime:
+def parse_reddit_timestamp(timestamp: float) -> datetime:
     """Convert Reddit UTC timestamp to timezone-aware datetime."""
-    from datetime import datetime as dt
-    return dt.fromtimestamp(timestamp, tz=timezone.utc)
+    return datetime.fromtimestamp(timestamp, tz=datetime_timezone.utc)
 
 
 @shared_task
@@ -506,7 +506,7 @@ def match_campaign(campaign_id: int) -> str:
         total_matches = post_matches + comment_matches
 
         # Update timestamp for backward compatibility
-        campaign.last_matched_at = timezone.now()
+        campaign.last_matched_at = django_timezone.now()
         campaign.save(update_fields=['last_matched_at'])
         
         logger.info(

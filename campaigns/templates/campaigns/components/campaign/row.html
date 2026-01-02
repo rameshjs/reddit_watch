@@ -1,0 +1,41 @@
+{# Single Campaign Row Component #}
+<tr>
+    <td class="ps-3">
+        <a href="{% url 'campaigns:campaign_detail' campaign.pk %}"
+            class="fw-semibold text-decoration-none text-dark d-block">
+            {{ campaign.name }}
+        </a>
+        {% if not campaign.is_watching %}
+        <span class="badge bg-warning text-dark" style="font-size: 0.65em;">
+            <i class="bi bi-pause-fill me-1"></i>Not Watching
+        </span>
+        {% else %}
+        <span class="badge bg-success" style="font-size: 0.65em;">
+            <i class="bi bi-activity me-1"></i>Watching ({{ campaign.match_interval_seconds }}s)
+        </span>
+        {% endif %}
+    </td>
+    <td class="text-muted small">
+        {{ campaign.description|truncatewords:15|default:"<em>No description provided</em>" }}
+    </td>
+    <td class="text-center">
+        <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2">
+            {{ campaign.keywords.count }}
+        </span>
+    </td>
+    <td class="text-end pe-3">
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-sm btn-outline-primary border-0" data-bs-toggle="modal"
+                data-bs-target="#editCampaignModal{{ campaign.id }}">
+                <i class="bi bi-pencil-fill me-1"></i>Edit
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal"
+                data-bs-target="#deleteCampaignModal{{ campaign.id }}">
+                <i class="bi bi-trash-fill me-1"></i>Delete
+            </button>
+        </div>
+    </td>
+</tr>
+{# Render Modals for this campaign inside the loop #}
+{% include 'campaigns/components/campaign/edit_modal.html' %}
+{% include 'campaigns/components/campaign/delete_modal.html' %}
