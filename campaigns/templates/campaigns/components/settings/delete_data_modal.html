@@ -15,7 +15,7 @@
                     This will also reset all tracking pointers. <strong>This action cannot be undone.</strong>
                 </p>
 
-                <form action="{% url 'campaigns:global_data_delete' %}" method="POST">
+                <form data-ajax action="{% url 'campaigns:global_data_delete_api' %}" method="POST" data-reload="true">
                     {% csrf_token %}
                     <div class="d-flex justify-content-center gap-2">
                         <button type="button" class="btn btn-light text-muted px-4"

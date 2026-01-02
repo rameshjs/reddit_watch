@@ -41,22 +41,29 @@ function initializeAjaxForms() {
 
             const data = await response.json();
 
-            if (data.success && data.html) {
-                const target = document.querySelector(targetSelector);
-                if (target) {
-                    if (swapMethod === 'outerHTML') {
-                        target.outerHTML = data.html;
-                    } else {
-                        target.innerHTML = data.html;
-                    }
+            if (data.success) {
+                if (data.reload) {
+                    window.location.reload();
+                    return;
                 }
 
-                // Close modal if open
-                closeOpenModals();
+                if (data.html) {
+                    const target = document.querySelector(targetSelector);
+                    if (target) {
+                        if (swapMethod === 'outerHTML') {
+                            target.outerHTML = data.html;
+                        } else {
+                            target.innerHTML = data.html;
+                        }
+                    }
 
-                // Reinitialize event handlers for dynamically added content
-                initializeIntervalPreview();
-                initializeTooltips();
+                    // Close modal if open
+                    closeOpenModals();
+
+                    // Reinitialize event handlers for dynamically added content
+                    initializeIntervalPreview();
+                    initializeTooltips();
+                }
             } else if (data.error) {
                 console.error('Server error:', data.error);
                 showToast('Error: ' + data.error, 'danger');

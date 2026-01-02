@@ -341,8 +341,8 @@ def ingest_comments() -> str:
 def process_posts_for_campaign(
     campaign: Campaign,
     keywords: list,
-    keyword_start_times: Dict[int, timezone.datetime],
-    earliest_start_time: timezone.datetime
+    keyword_start_times: Dict[int, datetime],
+    earliest_start_time: datetime
 ) -> int:
     """
     Process posts for keyword matching in a campaign.
@@ -402,8 +402,8 @@ def process_posts_for_campaign(
 def process_comments_for_campaign(
     campaign: Campaign,
     keywords: list,
-    keyword_start_times: Dict[int, timezone.datetime],
-    earliest_start_time: timezone.datetime
+    keyword_start_times: Dict[int, datetime],
+    earliest_start_time: datetime
 ) -> int:
     """
     Process comments for keyword matching in a campaign.

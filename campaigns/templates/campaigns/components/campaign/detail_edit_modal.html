@@ -7,7 +7,7 @@
                 <h5 class="modal-title">Campaign Settings</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{% url 'campaigns:campaign_update' campaign.pk %}" method="POST">
+            <form action="{% url 'campaigns:campaign_update_api' campaign.pk %}" method="POST" data-ajax>
                 {% csrf_token %}
                 <input type="hidden" name="source" value="detail">
                 <div class="modal-body">
