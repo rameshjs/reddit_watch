@@ -35,7 +35,7 @@
             <div class="alert alert-success mt-3 mb-0 d-flex align-items-center" role="alert">
                 <i class="bi bi-check-circle-fill me-2"></i>
                 <div>
-                    <strong>Watching is enabled.</strong> Checking every {{ campaign.watch_interval_seconds }} seconds.
+                    <strong>Watching is enabled.</strong> Checking every {{ campaign.match_interval_seconds }} seconds.
                 </div>
             </div>
             {% endif %}
@@ -462,14 +462,14 @@
                             <div class="col-4">
                                 <div class="input-group input-group-sm">
                                     <input type="number" class="form-control" name="hours"
-                                        value="{{ campaign.watch_interval_seconds|get_hours }}" min="0" placeholder="0">
+                                        value="{{ campaign.match_interval_seconds|get_hours }}" min="0" placeholder="0">
                                     <span class="input-group-text text-muted">h</span>
                                 </div>
                             </div>
                             <div class="col-4">
                                 <div class="input-group input-group-sm">
                                     <input type="number" class="form-control" name="minutes"
-                                        value="{{ campaign.watch_interval_seconds|get_minutes }}" min="0" max="59"
+                                        value="{{ campaign.match_interval_seconds|get_minutes }}" min="0" max="59"
                                         placeholder="0">
                                     <span class="input-group-text text-muted">m</span>
                                 </div>
@@ -477,7 +477,7 @@
                             <div class="col-4">
                                 <div class="input-group input-group-sm">
                                     <input type="number" class="form-control" name="seconds"
-                                        value="{{ campaign.watch_interval_seconds|get_seconds }}" min="0" max="59"
+                                        value="{{ campaign.match_interval_seconds|get_seconds }}" min="0" max="59"
                                         placeholder="0">
                                     <span class="input-group-text text-muted">s</span>
                                 </div>

@@ -71,7 +71,7 @@
                         </span>
                         {% else %}
                         <span class="badge bg-success" style="font-size: 0.65em;">
-                            <i class="bi bi-activity me-1"></i>Watching ({{ campaign.watch_interval_seconds }}s)
+                            <i class="bi bi-activity me-1"></i>Watching ({{ campaign.match_interval_seconds }}s)
                         </span>
                         {% endif %}
                     </td>
@@ -167,7 +167,7 @@
                             <div class="col-4">
                                 <div class="input-group input-group-sm">
                                     <input type="number" class="form-control" id="editHours{{ campaign.id }}"
-                                        name="hours" value="{{ campaign.watch_interval_seconds|get_hours }}" min="0"
+                                        name="hours" value="{{ campaign.match_interval_seconds|get_hours }}" min="0"
                                         placeholder="0">
                                     <span class="input-group-text text-muted">h</span>
                                 </div>
@@ -175,7 +175,7 @@
                             <div class="col-4">
                                 <div class="input-group input-group-sm">
                                     <input type="number" class="form-control" id="editMinutes{{ campaign.id }}"
-                                        name="minutes" value="{{ campaign.watch_interval_seconds|get_minutes }}" min="0"
+                                        name="minutes" value="{{ campaign.match_interval_seconds|get_minutes }}" min="0"
                                         max="59" placeholder="0">
                                     <span class="input-group-text text-muted">m</span>
                                 </div>
@@ -183,7 +183,7 @@
                             <div class="col-4">
                                 <div class="input-group input-group-sm">
                                     <input type="number" class="form-control" id="editSeconds{{ campaign.id }}"
-                                        name="seconds" value="{{ campaign.watch_interval_seconds|get_seconds }}" min="0"
+                                        name="seconds" value="{{ campaign.match_interval_seconds|get_seconds }}" min="0"
                                         max="59" placeholder="0">
                                     <span class="input-group-text text-muted">s</span>
                                 </div>
