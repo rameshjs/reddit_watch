@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_http_methods
-from .models import Campaign, Keyword, Tag, GlobalSettings
+from .models import Campaign, Keyword, Tag, GlobalSettings, CampaignMatch
 
 
 def campaign_list(request):
@@ -21,15 +21,78 @@ def campaign_detail(request, pk):
     campaign = get_object_or_404(
         Campaign.objects.prefetch_related(
             'keywords__tags',
-            'matches__keyword',
-            'matches__post',
-            'matches__comment'
         ), 
         pk=pk
     )
-    # Get recent matches, ordered by most recent
-    matches = campaign.matches.select_related('keyword', 'post', 'comment').order_by('-created_at')[:50]
-    return render(request, 'campaigns/campaign_detail.html', {'campaign': campaign, 'matches': matches})
+    
+    # Filter Matches
+    matches = CampaignMatch.objects.filter(campaign=campaign).select_related('keyword', 'post', 'comment').order_by('-created_at')
+    
+    # 1. Keyword Filter
+    keyword_id = request.GET.get('keyword')
+    if keyword_id:
+        matches = matches.filter(keyword_id=keyword_id)
+        
+    # 2. Type Filter (post vs comment)
+    match_type = request.GET.get('type')
+    if match_type == 'post':
+        matches = matches.filter(post__isnull=False)
+    elif match_type == 'comment':
+        matches = matches.filter(comment__isnull=False)
+        
+    # 3. Subreddit Filter
+    subreddit = request.GET.get('subreddit')
+    if subreddit:
+        # Complex query to check both post and comment subreddit
+        from django.db.models import Q
+        matches = matches.filter(
+            Q(post__subreddit__icontains=subreddit) | 
+            Q(comment__subreddit__icontains=subreddit)
+        )
+
+    # 4. Date Filter
+    from django.utils.dateparse import parse_date
+    date_from = request.GET.get('date_from')
+    if date_from:
+        d_from = parse_date(date_from)
+        if d_from:
+            matches = matches.filter(created_at__date__gte=d_from)
+            
+    date_to = request.GET.get('date_to')
+    if date_to:
+        d_to = parse_date(date_to)
+        if d_to:
+            matches = matches.filter(created_at__date__lte=d_to)
+
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(matches, 20) # 20 per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    is_filtered = any([
+        keyword_id,
+        match_type and match_type != 'all',
+        subreddit,
+        date_from,
+        date_to
+    ])
+    
+    context = {
+        'campaign': campaign,
+        'matches': page_obj,
+        'match_count': paginator.count,
+        'is_filtered': is_filtered,
+        # Pass filters back to template to keep state
+        'filters': {
+            'keyword': int(keyword_id) if keyword_id else '',
+            'type': match_type or 'all',
+            'subreddit': subreddit or '',
+            'date_from': date_from or '',
+            'date_to': date_to or '',
+        }
+    }
+    return render(request, 'campaigns/campaign_detail.html', context)
 
 
 @require_http_methods(["POST"])

@@ -45,24 +45,25 @@
     {# Tabbed Interface for Keywords and Matched Posts #}
     <ul class="nav nav-tabs mb-3" id="campaignTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link {% if matches|length == 0 %}active{% endif %}" id="keywords-tab"
+            <button class="nav-link {% if not matches and not is_filtered %}active{% endif %}" id="keywords-tab"
                 data-bs-toggle="tab" data-bs-target="#keywords" type="button" role="tab">
                 <i class="bi bi-tag me-2"></i>Keywords
                 <span class="badge bg-secondary ms-2">{{ campaign.keywords.count }}</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link {% if matches|length > 0 %}active{% endif %}" id="matches-tab" data-bs-toggle="tab"
-                data-bs-target="#matches" type="button" role="tab">
+            <button class="nav-link {% if matches or is_filtered %}active{% endif %}" id="matches-tab"
+                data-bs-toggle="tab" data-bs-target="#matches" type="button" role="tab">
                 <i class="bi bi-search me-2"></i>Matched Posts
-                <span class="badge bg-primary ms-2">{{ matches|length }}</span>
+                <span class="badge bg-primary ms-2">{{ match_count }}</span>
             </button>
         </li>
     </ul>
 
     <div class="tab-content" id="campaignTabContent">
         {# Keywords Tab #}
-        <div class="tab-pane fade {% if matches|length == 0 %}show active{% endif %}" id="keywords" role="tabpanel">
+        <div class="tab-pane fade {% if not matches and not is_filtered %}show active{% endif %}" id="keywords"
+            role="tabpanel">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="mb-0">Keywords</h4>
                 <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createKeywordModal">
@@ -77,121 +78,181 @@
         </div>
 
         {# Matched Posts Tab #}
-        <div class="tab-pane fade {% if matches|length > 0 %}show active{% endif %}" id="matches" role="tabpanel">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="mb-0">Matched Posts</h4>
-                {% if matches %}
-                <div class="btn-group btn-group-sm" role="group">
-                    <input type="radio" class="btn-check" name="matchFilter" id="filterAll" checked autocomplete="off">
-                    <label class="btn btn-outline-primary" for="filterAll" onclick="filterMatches('all')">
-                        <i class="bi bi-list-ul me-1"></i>All
-                    </label>
+        <div class="tab-pane fade {% if matches or is_filtered %}show active{% endif %}" id="matches" role="tabpanel">
 
-                    <input type="radio" class="btn-check" name="matchFilter" id="filterPosts" autocomplete="off">
-                    <label class="btn btn-outline-primary" for="filterPosts" onclick="filterMatches('post')">
-                        <i class="bi bi-file-post me-1"></i>Posts Only
-                    </label>
-
-                    <input type="radio" class="btn-check" name="matchFilter" id="filterComments" autocomplete="off">
-                    <label class="btn btn-outline-primary" for="filterComments" onclick="filterMatches('comment')">
-                        <i class="bi bi-chat-left-text me-1"></i>Comments Only
-                    </label>
+            {# Filters #}
+            <div class="card mb-3 bg-light border-0">
+                <div class="card-body py-3">
+                    <form method="get" class="row g-2 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-muted mb-1">Keyword</label>
+                            <select name="keyword" class="form-select form-select-sm">
+                                <option value="">All Keywords</option>
+                                {% for k in campaign.keywords.all %}
+                                <option value="{{ k.id }}" {% if filters.keyword == k.id %}selected{% endif %}>{{ k.name
+                                    }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold text-muted mb-1">Type</label>
+                            <select name="type" class="form-select form-select-sm">
+                                <option value="all" {% if filters.type == 'all' %}selected{% endif %}>All Types</option>
+                                <option value="post" {% if filters.type == 'post' %}selected{% endif %}>Posts Only
+                                </option>
+                                <option value="comment" {% if filters.type == 'comment' %}selected{% endif %}>Comments
+                                    Only</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold text-muted mb-1">Subreddit</label>
+                            <input type="text" name="subreddit" class="form-control form-control-sm"
+                                value="{{ filters.subreddit }}" placeholder="Any">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold text-muted mb-1">From</label>
+                            <input type="date" name="date_from" class="form-control form-control-sm"
+                                value="{{ filters.date_from }}">
+                        </div>
+                        <div class="col-md-3 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                                <i class="bi bi-funnel-fill me-1"></i>Filter
+                            </button>
+                            <a href="{% url 'campaigns:campaign_detail' campaign.pk %}"
+                                class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-x-circle"></i>
+                            </a>
+                        </div>
+                    </form>
                 </div>
-                {% endif %}
             </div>
 
             {% if matches %}
             <div class="card shadow-sm">
                 <div class="list-group list-group-flush">
-                    {% for match in matches %}
-                    <div class="list-group-item match-item"
-                        data-match-type="{% if match.post %}post{% else %}comment{% endif %}">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <span class="badge bg-secondary">{{ match.keyword.name }}</span>
-                                    {% if match.post %}
-                                    <span class="badge bg-info text-dark">
-                                        <i class="bi bi-file-post me-1"></i>Post
-                                    </span>
-                                    {% else %}
-                                    <span class="badge bg-warning text-dark">
-                                        <i class="bi bi-chat-left-text me-1"></i>Comment
-                                    </span>
-                                    {% endif %}
-                                    <small class="text-muted">{{ match.created_at|timesince }} ago</small>
-                                </div>
+                    <div class="list-group list-group-flush">
+                        {% for match in matches %}
+                        <div class="list-group-item match-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="badge bg-secondary">{{ match.keyword.name }}</span>
+                                        {% if match.post %}
+                                        <span class="badge bg-info text-dark">
+                                            <i class="bi bi-file-post me-1"></i>Post
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-chat-left-text me-1"></i>Comment
+                                        </span>
+                                        {% endif %}
+                                        <small class="text-muted">{{ match.created_at|timesince }} ago</small>
+                                    </div>
 
-                                {% if match.post %}
-                                <h6 class="mb-1">
-                                    <a href="https://reddit.com{{ match.post.permalink }}" target="_blank"
-                                        class="text-decoration-none text-dark">
-                                        {{ match.post.title }}
-                                        <i class="bi bi-box-arrow-up-right small ms-1"></i>
-                                    </a>
-                                </h6>
-                                <p class="text-muted small mb-1">
-                                    <i class="bi bi-reddit me-1"></i>r/{{ match.post.subreddit }} •
-                                    by u/{{ match.post.author }} •
-                                    {{ match.post.score }} points •
-                                    {{ match.post.num_comments }} comments
-                                </p>
-                                {% if match.post.selftext %}
-                                <div class="mt-2">
-                                    <p class="text-muted small mb-0" style="white-space: pre-wrap;">{{
-                                        match.post.selftext }}</p>
+                                    {% if match.post %}
+                                    <h6 class="mb-1">
+                                        <a href="https://reddit.com{{ match.post.permalink }}" target="_blank"
+                                            class="text-decoration-none text-dark">
+                                            {{ match.post.title }}
+                                            <i class="bi bi-box-arrow-up-right small ms-1"></i>
+                                        </a>
+                                    </h6>
+                                    <p class="text-muted small mb-1">
+                                        <i class="bi bi-reddit me-1"></i>r/{{ match.post.subreddit }} •
+                                        by u/{{ match.post.author }} •
+                                        {{ match.post.score }} points •
+                                        {{ match.post.num_comments }} comments
+                                    </p>
+                                    {% if match.post.selftext %}
+                                    <div class="mt-2">
+                                        <p class="text-muted small mb-0" style="white-space: pre-wrap;">{{
+                                            match.match_text|default:match.post.selftext|truncatechars:300 }}</p>
+                                    </div>
+                                    {% endif %}
+                                    {% else %}
+                                    <div class="mb-1">
+                                        <a href="https://reddit.com{{ match.comment.permalink }}" target="_blank"
+                                            class="text-decoration-none text-dark">
+                                            <i class="bi bi-box-arrow-up-right small me-1"></i>
+                                            View Comment on Reddit
+                                        </a>
+                                    </div>
+                                    <p class="text-muted small mb-1">
+                                        <i class="bi bi-reddit me-1"></i>r/{{ match.comment.subreddit }} •
+                                        by u/{{ match.comment.author }} •
+                                        {{ match.comment.score }} points
+                                    </p>
+                                    <div class="mt-2 p-2 bg-light rounded">
+                                        <p class="mb-0 small" style="white-space: pre-wrap;">{{
+                                            match.match_text|default:match.comment.body|truncatechars:300 }}</p>
+                                    </div>
+                                    {% endif %}
                                 </div>
-                                {% endif %}
-                                {% else %}
-                                <div class="mb-1">
-                                    <a href="https://reddit.com{{ match.comment.permalink }}" target="_blank"
-                                        class="text-decoration-none text-dark">
-                                        <i class="bi bi-box-arrow-up-right small me-1"></i>
-                                        View Comment on Reddit
-                                    </a>
-                                </div>
-                                <p class="text-muted small mb-1">
-                                    <i class="bi bi-reddit me-1"></i>r/{{ match.comment.subreddit }} •
-                                    by u/{{ match.comment.author }} •
-                                    {{ match.comment.score }} points
-                                </p>
-                                <div class="mt-2 p-2 bg-light rounded">
-                                    <p class="mb-0 small" style="white-space: pre-wrap;">{{ match.comment.body }}</p>
-                                </div>
-                                {% endif %}
                             </div>
                         </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
+
+                    {# Pagination #}
+                    {% if matches.has_other_pages %}
+                    <div class="card-footer bg-light">
+                        <nav aria-label="Matches pagination">
+                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                {% if matches.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                        href="?page={{ matches.previous_page_number }}{% if filters.keyword %}&keyword={{ filters.keyword }}{% endif %}{% if filters.type != 'all' %}&type={{ filters.type }}{% endif %}{% if filters.subreddit %}&subreddit={{ filters.subreddit }}{% endif %}{% if filters.date_from %}&date_from={{ filters.date_from }}{% endif %}{% if filters.date_to %}&date_to={{ filters.date_to }}{% endif %}">Previous</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Previous</span>
+                                </li>
+                                {% endif %}
+
+                                <li class="page-item disabled">
+                                    <span class="page-link text-muted">Page {{ matches.number }} of {{
+                                        matches.paginator.num_pages }}</span>
+                                </li>
+
+                                {% if matches.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                        href="?page={{ matches.next_page_number }}{% if filters.keyword %}&keyword={{ filters.keyword }}{% endif %}{% if filters.type != 'all' %}&type={{ filters.type }}{% endif %}{% if filters.subreddit %}&subreddit={{ filters.subreddit }}{% endif %}{% if filters.date_from %}&date_from={{ filters.date_from }}{% endif %}{% if filters.date_to %}&date_to={{ filters.date_to }}{% endif %}">Next</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Next</span>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
                 </div>
-            </div>
-            {% else %}
-            <div class="card shadow-sm">
-                <div class="card-body text-center py-5">
-                    <i class="bi bi-search display-4 text-muted"></i>
-                    <p class="text-muted mt-3 mb-0">No matches found yet. Matches will appear here when keywords are
-                        found
-                        in Reddit posts or comments.</p>
+                {% else %}
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-search display-4 text-muted"></i>
+                        {% if campaign.matches.exists %}
+                        {# Logic to check if its just filters returning empty or no matches at all #}
+                        <h5 class="mt-3">No matches found with these filters</h5>
+                        <p class="text-muted mb-3">Try adjusting your filters to see more results.</p>
+                        <a href="{% url 'campaigns:campaign_detail' campaign.pk %}"
+                            class="btn btn-outline-primary btn-sm">Clear Filters</a>
+                        {% else %}
+                        <h5 class="mt-3">No matches yet</h5>
+                        <p class="text-muted mb-0">Matches will appear here when keywords are found in specific
+                            Reddit posts or comments. Make sure "Watching" is enabled in settings.</p>
+                        {% endif %}
+                    </div>
                 </div>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
     </div>
-</div>
 
-{# JavaScript for filtering matches #}
-<script>
-    function filterMatches(type) {
-        const items = document.querySelectorAll('.match-item');
-        items.forEach(item => {
-            if (type === 'all') {
-                item.style.display = '';
-            } else {
-                item.style.display = item.dataset.matchType === type ? '' : 'none';
-            }
-        });
-    }
-</script>
+    {# JavaScript for filters #}
+    {# No JS needed now, handled by GET params #}
 </div>
 </div>
 
