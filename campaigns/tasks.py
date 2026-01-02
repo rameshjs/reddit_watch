@@ -23,10 +23,10 @@ def ingest_posts():
             return "No GlobalSettings found"
         
         params = {'limit': 100}
-        # Use 'after' to get posts NEWER than the last one we fetched
+        # Use 'before' to get posts NEWER than the last one we fetched
         if global_settings.last_post_id:
-            params['after'] = global_settings.last_post_id
-            print(f"[{timezone.now()}] Ingesting Posts AFTER {global_settings.last_post_id}")
+            params['before'] = global_settings.last_post_id
+            print(f"[{timezone.now()}] Ingesting Posts BEFORE {global_settings.last_post_id}")
         else:
             print(f"[{timezone.now()}] First fetch - getting latest posts")
             
@@ -34,7 +34,17 @@ def ingest_posts():
         children = data.get('data', {}).get('children', [])
         
         if not children:
-            print(f"[{timezone.now()}] No new posts found")
+            # Stale ID Detection: Increment empty fetch count
+            global_settings.empty_post_fetch_count += 1
+            print(f"[{timezone.now()}] No new posts found (Consecutive empty: {global_settings.empty_post_fetch_count})")
+            
+            # Reset after 10 consecutive empty fetches (~10 minutes at 60s interval)
+            if global_settings.empty_post_fetch_count >= 10:
+                print(f"[{timezone.now()}] POST ID STALE: Resetting last_post_id to None after 10 empty fetches")
+                global_settings.last_post_id = None
+                global_settings.empty_post_fetch_count = 0
+            
+            global_settings.save(update_fields=['empty_post_fetch_count', 'last_post_id'])
             return "No new posts to ingest"
         
         newest_id = None
@@ -75,7 +85,9 @@ def ingest_posts():
         # Update the last_post_id to the newest one we saw
         if newest_id:
             global_settings.last_post_id = newest_id
-            global_settings.save(update_fields=['last_post_id'])
+            # Reset empty fetch count on success
+            global_settings.empty_post_fetch_count = 0
+            global_settings.save(update_fields=['last_post_id', 'empty_post_fetch_count'])
             print(f"[{timezone.now()}] Processed {count} posts ({created_count} new). Newest ID: {newest_id}")
             
         return f"Ingested {count} posts ({created_count} new). Newest ID: {newest_id}"
@@ -94,10 +106,10 @@ def ingest_comments():
             return "No GlobalSettings found"
             
         params = {'limit': 100}
-        # Use 'after' to get comments NEWER than the last one we fetched
+        # Use 'before' to get comments NEWER than the last one we fetched
         if global_settings.last_comment_id:
-            params['after'] = global_settings.last_comment_id
-            print(f"[{timezone.now()}] Ingesting Comments AFTER {global_settings.last_comment_id}")
+            params['before'] = global_settings.last_comment_id
+            print(f"[{timezone.now()}] Ingesting Comments BEFORE {global_settings.last_comment_id}")
         else:
             print(f"[{timezone.now()}] First fetch - getting latest comments")
         
@@ -105,7 +117,17 @@ def ingest_comments():
         children = data.get('data', {}).get('children', [])
         
         if not children:
-            print(f"[{timezone.now()}] No new comments found")
+            # Stale ID Detection: Increment empty fetch count
+            global_settings.empty_comment_fetch_count += 1
+            print(f"[{timezone.now()}] No new comments found (Consecutive empty: {global_settings.empty_comment_fetch_count})")
+            
+            # Reset after 10 consecutive empty fetches
+            if global_settings.empty_comment_fetch_count >= 10:
+                print(f"[{timezone.now()}] COMMENT ID STALE: Resetting last_comment_id to None after 10 empty fetches")
+                global_settings.last_comment_id = None
+                global_settings.empty_comment_fetch_count = 0
+            
+            global_settings.save(update_fields=['empty_comment_fetch_count', 'last_comment_id'])
             return "No new comments to ingest"
         
         newest_id = None
@@ -140,7 +162,9 @@ def ingest_comments():
         # Update the last_comment_id to the newest one we saw
         if newest_id:
             global_settings.last_comment_id = newest_id
-            global_settings.save(update_fields=['last_comment_id'])
+            # Reset empty fetch count on success
+            global_settings.empty_comment_fetch_count = 0
+            global_settings.save(update_fields=['last_comment_id', 'empty_comment_fetch_count'])
             print(f"[{timezone.now()}] Processed {count} comments ({created_count} new). Newest ID: {newest_id}")
             
         return f"Ingested {count} comments ({created_count} new). Newest ID: {newest_id}"

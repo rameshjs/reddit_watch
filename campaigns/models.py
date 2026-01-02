@@ -14,6 +14,9 @@ class GlobalSettings(models.Model):
     comment_fetch_interval = models.IntegerField(default=360, help_text="Seconds between fetching comments")
     last_post_id = models.CharField(max_length=20, blank=True, null=True, help_text="Fullname of last fetched post")
     last_comment_id = models.CharField(max_length=20, blank=True, null=True, help_text="Fullname of last fetched comment")
+    empty_post_fetch_count = models.IntegerField(default=0, help_text="Consecutive empty post fetches (for stale ID detection)")
+    empty_comment_fetch_count = models.IntegerField(default=0, help_text="Consecutive empty comment fetches (for stale ID detection)")
+    
     
     def save(self, *args, **kwargs):
         if not self.pk and GlobalSettings.objects.exists():
