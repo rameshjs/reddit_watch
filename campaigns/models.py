@@ -154,11 +154,11 @@ class RedditPost(models.Model):
     """A Reddit post fetched from r/all"""
     reddit_id = models.CharField(max_length=20, unique=True)
     title = models.CharField(max_length=300)
-    url = models.URLField()
+    url = models.URLField(max_length=2000)
     author = models.CharField(max_length=100)
     subreddit = models.CharField(max_length=100)
     selftext = models.TextField(blank=True)
-    permalink = models.CharField(max_length=300)
+    permalink = models.CharField(max_length=1000)
     
     score = models.IntegerField(default=0)
     num_comments = models.IntegerField(default=0)
@@ -185,7 +185,7 @@ class RedditComment(models.Model):
     body = models.TextField()
     author = models.CharField(max_length=100)
     subreddit = models.CharField(max_length=100)
-    permalink = models.CharField(max_length=300)
+    permalink = models.CharField(max_length=1000)
     
     score = models.IntegerField(default=0)
     created_utc = models.DateTimeField(db_index=True)
