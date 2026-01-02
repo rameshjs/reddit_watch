@@ -79,36 +79,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'reddit_watch.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
-
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
@@ -120,22 +90,48 @@ USE_I18N = True
 
 USE_TZ = True
 
+# Database
+# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+
+import dj_database_url
+import os
+
+# Database
+# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+
+if config('DATABASE_URL', default=None):
+    DATABASE_URL = config('DATABASE_URL')
+else:
+    # Construct DATABASE_URL from environment variables
+    POSTGRES_USER = config('POSTGRES_USER')
+    POSTGRES_PASSWORD = config('POSTGRES_PASSWORD')
+    POSTGRES_DB = config('POSTGRES_DB')
+    # Default to 'db' service name if not set
+    POSTGRES_HOST = config('SQL_HOST', default='db') 
+    POSTGRES_PORT = config('SQL_PORT', default='5432')
+    
+    DATABASE_URL = f"postgres://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+
+# Parse the database URL
+DATABASES = {
+    'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+}
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
-
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Celery Configuration
-CELERY_BROKER_URL = 'django://'
-CELERY_RESULT_BACKEND = 'django-db'
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://redis:6379/0')
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='django-db')
 
 # Celery Beat Configuration
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_TIMEZONE = TIME_ZONE
+
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:8000', cast=lambda v: [s.strip() for s in v.split(',')])
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field

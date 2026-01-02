@@ -1,0 +1,75 @@
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.dev
+    depends_on:
+      - db
+      - redis
+    environment:
+        - DATABASE=postgres
+        - SQL_HOST=db
+        - SQL_PORT=5432
+        - POSTGRES_USER=hello_django
+        - POSTGRES_PASSWORD=hello_django
+        - POSTGRES_DB=hello_django_dev
+
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=hello_django
+      - POSTGRES_PASSWORD=hello_django
+      - POSTGRES_DB=hello_django_dev
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  celery:
+    build: .
+    command: celery -A reddit_watch worker -l info
+    volumes:
+      - .:/app
+    env_file:
+      - .env.dev
+    depends_on:
+      - db
+      - redis
+      - web
+    environment:
+        - DATABASE=postgres
+        - SQL_HOST=db
+        - SQL_PORT=5432
+        - POSTGRES_USER=hello_django
+        - POSTGRES_PASSWORD=hello_django
+        - POSTGRES_DB=hello_django_dev
+
+  celery-beat:
+    build: .
+    command: celery -A reddit_watch beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/app
+    env_file:
+      - .env.dev
+    depends_on:
+      - db
+      - redis
+      - web
+    environment:
+        - DATABASE=postgres
+        - SQL_HOST=db
+        - SQL_PORT=5432
+        - POSTGRES_USER=hello_django
+        - POSTGRES_PASSWORD=hello_django
+        - POSTGRES_DB=hello_django_dev
+
+volumes:
+  postgres_data:
