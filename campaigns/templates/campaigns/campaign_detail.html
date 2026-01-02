@@ -89,8 +89,7 @@
                             <select name="keyword" class="form-select form-select-sm">
                                 <option value="">All Keywords</option>
                                 {% for k in campaign.keywords.all %}
-                                <option value="{{ k.id }}" {% if filters.keyword == k.id %}selected{% endif %}>{{ k.name
-                                    }}</option>
+                                <option value="{{ k.id }}" {% if filters.keyword == k.id %}selected{% endif %}>{{ k.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -98,10 +97,8 @@
                             <label class="form-label small fw-bold text-muted mb-1">Type</label>
                             <select name="type" class="form-select form-select-sm">
                                 <option value="all" {% if filters.type == 'all' %}selected{% endif %}>All Types</option>
-                                <option value="post" {% if filters.type == 'post' %}selected{% endif %}>Posts Only
-                                </option>
-                                <option value="comment" {% if filters.type == 'comment' %}selected{% endif %}>Comments
-                                    Only</option>
+                                <option value="post" {% if filters.type == 'post' %}selected{% endif %}>Posts Only</option>
+                                <option value="comment" {% if filters.type == 'comment' %}selected{% endif %}>Comments Only</option>
                             </select>
                         </div>
                         <div class="col-md-2">
