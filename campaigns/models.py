@@ -38,6 +38,8 @@ class Campaign(models.Model):
     is_watching = models.BooleanField(default=False)
     match_interval_seconds = models.IntegerField(default=3600, help_text="Interval in seconds to match keywords")
     last_matched_at = models.DateTimeField(null=True, blank=True)
+    last_processed_post_id = models.BigIntegerField(default=0, help_text="Last processed RedditPost internal ID")
+    last_processed_comment_id = models.BigIntegerField(default=0, help_text="Last processed RedditComment internal ID")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -208,7 +210,7 @@ class CampaignMatch(models.Model):
     
     class Meta:
         ordering = ['-created_at']
-        unique_together = [('campaign', 'post'), ('campaign', 'comment')]
+        unique_together = [('campaign', 'post', 'keyword'), ('campaign', 'comment', 'keyword')]
 
     def __str__(self):
         return f"Match for {self.campaign.name}: {self.keyword.name}"

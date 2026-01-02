@@ -179,55 +179,91 @@ def match_campaign(campaign_id):
     """Match keywords against ingested data for a specific campaign"""
     try:
         campaign = Campaign.objects.get(pk=campaign_id)
+        keywords = list(campaign.keywords.all())
         
-        # Determine time window
-        end_time = timezone.now()
-        start_time = campaign.last_matched_at
-        
-        if not start_time:
-            # Default to 24 hours ago if first run
-            start_time = end_time - datetime.timedelta(hours=24)
-            
-        print(f"[{timezone.now()}] Matching Campaign {campaign.name} Window: {start_time} -> {end_time}")
-        
-        date_range = (start_time, end_time)
-        keywords = campaign.keywords.all()
-        
+        if not keywords:
+            return f"No keywords for Campaign {campaign.name}"
+
         match_count = 0
+        BATCH_SIZE = 1000
         
-        # 1. Check Posts
-        # Filter posts in time window
-        posts = RedditPost.objects.filter(created_utc__range=date_range)
+        # --- 1. Process Posts ---
+        last_post_id = campaign.last_processed_post_id
+        max_post_id_processed = last_post_id
         
-        for post in posts:
-            text_to_scan = (post.title + " " + post.selftext).lower()
-            for kw in keywords:
-                if kw.name.lower() in text_to_scan:
-                    CampaignMatch.objects.get_or_create(
-                        campaign=campaign,
-                        keyword=kw,
-                        post=post,
-                        defaults={'match_text': f"Title: {post.title}..."}
-                    )
-                    match_count += 1
-                    
-        # 2. Check Comments
-        comments = RedditComment.objects.filter(created_utc__range=date_range)
+        while True:
+            # Fetch batch of posts with ID > last_processed
+            # Order by ID asc to process in insertion order
+            posts = list(RedditPost.objects.filter(id__gt=max_post_id_processed).order_by('id')[:BATCH_SIZE])
+            
+            if not posts:
+                break
+                
+            print(f"[{timezone.now()}] Campaign {campaign.name}: Scanning {len(posts)} posts (ID > {max_post_id_processed})")
+            
+            for post in posts:
+                text_to_scan = (post.title + " " + post.selftext).lower()
+                
+                # Check ALL keywords for this post
+                for kw in keywords:
+                    if kw.name.lower() in text_to_scan:
+                        CampaignMatch.objects.get_or_create(
+                            campaign=campaign,
+                            post=post,
+                            keyword=kw,
+                            defaults={
+                                'match_text': f"Title: {post.title[:200]}..."
+                            }
+                        )
+                        match_count += 1
+                
+                # Keep track of the highest ID processed so far
+                if post.id > max_post_id_processed:
+                    max_post_id_processed = post.id
+
+            # Update checkpoint after every batch to be safe
+            campaign.last_processed_post_id = max_post_id_processed
+            campaign.save(update_fields=['last_processed_post_id'])
+
+        # --- 2. Process Comments ---
+        last_comment_id = campaign.last_processed_comment_id
+        max_comment_id_processed = last_comment_id
         
-        for comment in comments:
-            text_to_scan = comment.body.lower()
-            for kw in keywords:
-                 if kw.name.lower() in text_to_scan:
-                    CampaignMatch.objects.get_or_create(
-                        campaign=campaign,
-                        keyword=kw,
-                        comment=comment,
-                        defaults={'match_text': comment.body[:100]}
-                    )
-                    match_count += 1
-                    
-        # Update last matched timestamp
-        campaign.last_matched_at = end_time
+        while True:
+            # Fetch batch of comments with ID > last_processed
+            comments = list(RedditComment.objects.filter(id__gt=max_comment_id_processed).order_by('id')[:BATCH_SIZE])
+            
+            if not comments:
+                break
+                
+            print(f"[{timezone.now()}] Campaign {campaign.name}: Scanning {len(comments)} comments (ID > {max_comment_id_processed})")
+            
+            for comment in comments:
+                text_to_scan = comment.body.lower()
+                
+                # Check ALL keywords for this comment
+                for kw in keywords:
+                    if kw.name.lower() in text_to_scan:
+                        CampaignMatch.objects.get_or_create(
+                            campaign=campaign,
+                            comment=comment,
+                            keyword=kw,
+                            defaults={
+                                'match_text': comment.body[:200]
+                            }
+                        )
+                        match_count += 1
+
+                # Keep track of the highest ID processed so far
+                if comment.id > max_comment_id_processed:
+                    max_comment_id_processed = comment.id
+
+            # Update checkpoint after every batch
+            campaign.last_processed_comment_id = max_comment_id_processed
+            campaign.save(update_fields=['last_processed_comment_id'])
+
+        # Update legacy timestamp for backward compatibility/display
+        campaign.last_matched_at = timezone.now()
         campaign.save(update_fields=['last_matched_at'])
         
         return f"Matched {match_count} items for Campaign {campaign.name}"
@@ -235,4 +271,6 @@ def match_campaign(campaign_id):
     except Campaign.DoesNotExist:
         return f"Campaign {campaign_id} not found"
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return f"Error matching campaign {campaign_id}: {str(e)}"
