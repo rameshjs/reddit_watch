@@ -1,4 +1,4 @@
-# I built Reddit Watch for my own use because I wanted a better way to monitor specific keywords on Reddit without constantly checking the site. My main goal is to use AI to filter posts by context—separating the signal from the noise—rather than just getting a raw list of every keyword match.
+### I built Reddit Watch for my own use because I wanted a better way to monitor specific keywords on Reddit without constantly checking the site. My main goal is to use AI to filter posts by context—separating the signal from the noise—rather than just getting a raw list of every keyword match.
 
 ## How it works
 
