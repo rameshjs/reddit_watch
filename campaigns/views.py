@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_http_methods
-from .models import Campaign, Keyword, Tag, GlobalSettings, CampaignMatch
+from django.contrib import messages
+from .models import Campaign, Keyword, Tag, GlobalSettings, CampaignMatch, RedditPost, RedditComment
 
 
 def campaign_list(request):
@@ -302,4 +303,27 @@ def global_settings_update(request):
     
     # Return modal partial for HTMX requests
     return render(request, 'campaigns/campaign_list.html#global_settings_modal', {'settings': settings})
+
+
+@require_http_methods(["POST"])
+def global_data_delete(request):
+    """Delete all ingested data and reset pointers"""
+    RedditPost.objects.all().delete()
+    RedditComment.objects.all().delete()
+    
+    # Reset Global Settings
+    settings = get_object_or_404(GlobalSettings, pk=1)
+    settings.last_post_id = None
+    settings.last_comment_id = None
+    settings.empty_post_fetch_count = 0
+    settings.empty_comment_fetch_count = 0
+    settings.save()
+    
+    # Reset Campaign Pointers
+    Campaign.objects.update(last_processed_post_id=0, last_processed_comment_id=0)
+    
+    messages.success(request, "All ingested data has been successfully deleted.")
+    
+    campaigns = Campaign.objects.all().prefetch_related('keywords')
+    return render(request, 'campaigns/campaign_list.html', {'campaigns': campaigns, 'settings': settings})
 
