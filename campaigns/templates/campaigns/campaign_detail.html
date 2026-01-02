@@ -165,8 +165,7 @@
                                     </p>
                                     {% if match.post.selftext %}
                                     <div class="mt-2">
-                                        <p class="text-muted small mb-0" style="white-space: pre-wrap;">{{
-                                            match.match_text|default:match.post.selftext|truncatechars:300 }}</p>
+                                        <p class="text-muted small mb-0" style="white-space: pre-wrap;">{{ match.match_text|default:match.post.selftext|truncatechars:300 }}</p>
                                     </div>
                                     {% endif %}
                                     {% else %}
@@ -183,8 +182,7 @@
                                         {{ match.comment.score }} points
                                     </p>
                                     <div class="mt-2 p-2 bg-light rounded">
-                                        <p class="mb-0 small" style="white-space: pre-wrap;">{{
-                                            match.match_text|default:match.comment.body|truncatechars:300 }}</p>
+                                        <p class="mb-0 small" style="white-space: pre-wrap;">{{ match.match_text|default:match.comment.body|truncatechars:300 }}</p>
                                     </div>
                                     {% endif %}
                                 </div>
@@ -210,8 +208,7 @@
                                 {% endif %}
 
                                 <li class="page-item disabled">
-                                    <span class="page-link text-muted">Page {{ matches.number }} of {{
-                                        matches.paginator.num_pages }}</span>
+                                    <span class="page-link text-muted">Page {{ matches.number }} of {{ matches.paginator.num_pages }}</span>
                                 </li>
 
                                 {% if matches.has_next %}
