@@ -41,7 +41,13 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item me-2">
+                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                            data-bs-target="#ingestionProgressModal">
+                            <i class="bi bi-activity me-1"></i>Ingestion Status
+                        </button>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'campaigns:campaign_list' %}">Campaigns</a>
                     </li>
@@ -126,6 +132,168 @@
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', initializeIntervalPreview);
+    </script>
+
+    {# Ingestion Progress Modal #}
+    <div class="modal fade" id="ingestionProgressModal" tabindex="-1" aria-labelledby="ingestionProgressModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ingestionProgressModalLabel">
+                        <i class="bi bi-activity me-2 text-primary"></i>Ingestion Status
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="ingestionProgressContent">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="text-muted mt-2 mb-0">Loading progress...</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mt-3 pt-3 border-top">
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>Auto-refreshes every 10 seconds
+                        </small>
+                        <small id="lastUpdated" class="text-muted"></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Ingestion Progress Modal auto-refresh
+        let progressRefreshInterval = null;
+
+        function formatTimeAgo(isoString) {
+            if (!isoString) return 'Never';
+            const date = moment(isoString);
+            return date.fromNow();
+        }
+
+        function getStatusBadge(status) {
+            if (status === 'success') {
+                return '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Success</span>';
+            } else if (status === 'error') {
+                return '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Error</span>';
+            }
+            return '<span class="badge bg-secondary"><i class="bi bi-question-circle me-1"></i>Unknown</span>';
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toLocaleString();
+        }
+
+        function updateProgressUI(data) {
+            const container = document.getElementById('ingestionProgressContent');
+
+            if (data.error) {
+                container.innerHTML = `
+                    <div class="alert alert-danger mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>${data.error}
+                    </div>
+                `;
+                return;
+            }
+
+            const posts = data.posts || {};
+            const comments = data.comments || {};
+
+            container.innerHTML = `
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="card bg-light border-0">
+                            <div class="card-body py-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0 fw-semibold"><i class="bi bi-file-text me-2 text-primary"></i>Posts</h6>
+                                    ${getStatusBadge(posts.status)}
+                                </div>
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="fs-5 fw-bold text-dark">${formatNumber(posts.total || 0)}</div>
+                                        <small class="text-muted">Total</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="fs-5 fw-bold text-success">${posts.new_count || 0}</div>
+                                        <small class="text-muted">New</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="fs-5 fw-bold text-info">${posts.last_count || 0}</div>
+                                        <small class="text-muted">Fetched</small>
+                                    </div>
+                                </div>
+                                <div class="text-muted small mt-2">
+                                    <i class="bi bi-clock me-1"></i>Last fetch: ${formatTimeAgo(posts.last_fetch_at)}
+                                </div>
+                                ${posts.error ? `<div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>${posts.error}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="card bg-light border-0">
+                            <div class="card-body py-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0 fw-semibold"><i class="bi bi-chat-text me-2 text-primary"></i>Comments</h6>
+                                    ${getStatusBadge(comments.status)}
+                                </div>
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="fs-5 fw-bold text-dark">${formatNumber(comments.total || 0)}</div>
+                                        <small class="text-muted">Total</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="fs-5 fw-bold text-success">${comments.new_count || 0}</div>
+                                        <small class="text-muted">New</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="fs-5 fw-bold text-info">${comments.last_count || 0}</div>
+                                        <small class="text-muted">Fetched</small>
+                                    </div>
+                                </div>
+                                <div class="text-muted small mt-2">
+                                    <i class="bi bi-clock me-1"></i>Last fetch: ${formatTimeAgo(comments.last_fetch_at)}
+                                </div>
+                                ${comments.error ? `<div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>${comments.error}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('lastUpdated').textContent = 'Updated: ' + moment().format('h:mm:ss A');
+        }
+
+        function fetchIngestionProgress() {
+            fetch('{% url "campaigns:ingestion_progress" %}')
+                .then(response => response.json())
+                .then(data => updateProgressUI(data))
+                .catch(error => {
+                    console.error('Error fetching progress:', error);
+                    updateProgressUI({ error: 'Failed to fetch progress data' });
+                });
+        }
+
+        // Modal event listeners
+        document.getElementById('ingestionProgressModal').addEventListener('shown.bs.modal', function () {
+            // Fetch immediately when modal opens
+            fetchIngestionProgress();
+            // Set up 10-second refresh interval
+            progressRefreshInterval = setInterval(fetchIngestionProgress, 10000);
+        });
+
+        document.getElementById('ingestionProgressModal').addEventListener('hidden.bs.modal', function () {
+            // Clear interval when modal closes
+            if (progressRefreshInterval) {
+                clearInterval(progressRefreshInterval);
+                progressRefreshInterval = null;
+            }
+        });
     </script>
 
     {% block extra_js %}{% endblock %}

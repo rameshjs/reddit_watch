@@ -9,6 +9,9 @@ urlpatterns = [
     path('settings/update/', views.global_settings_update, name='global_settings_update'),
     path('settings/delete-data/', views.global_data_delete, name='global_data_delete'),
     
+    # Ingestion Progress API
+    path('api/ingestion-progress/', views.get_ingestion_progress, name='ingestion_progress'),
+    
     # Campaign URLs
     path('', views.campaign_list, name='campaign_list'),
     path('<int:pk>/', views.campaign_detail, name='campaign_detail'),

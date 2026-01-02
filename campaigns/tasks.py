@@ -5,6 +5,34 @@ import requests
 from django.conf import settings
 from decouple import config
 import datetime
+import json
+import redis
+
+# Redis connection for progress tracking
+def get_redis_client():
+    return redis.from_url(settings.REDIS_URL)
+
+REDIS_PROGRESS_KEY = 'reddit_watch:ingestion_progress'
+
+def update_progress(data_type, count, new_count, total=None, status='success', error=None):
+    """Update ingestion progress in Redis"""
+    try:
+        r = get_redis_client()
+        progress_raw = r.get(REDIS_PROGRESS_KEY)
+        progress = json.loads(progress_raw) if progress_raw else {}
+        
+        progress[data_type] = {
+            'last_fetch_at': timezone.now().isoformat(),
+            'last_count': count,
+            'new_count': new_count,
+            'total': total or progress.get(data_type, {}).get('total', 0),
+            'status': status,
+            'error': error
+        }
+        
+        r.set(REDIS_PROGRESS_KEY, json.dumps(progress))
+    except Exception as e:
+        print(f"[{timezone.now()}] Error updating Redis progress: {e}")
 
 def make_request(url, params=None):
     headers = {
@@ -89,11 +117,16 @@ def ingest_posts():
             global_settings.empty_post_fetch_count = 0
             global_settings.save(update_fields=['last_post_id', 'empty_post_fetch_count'])
             print(f"[{timezone.now()}] Processed {count} posts ({created_count} new). Newest ID: {newest_id}")
+        
+        # Update progress in Redis
+        total_posts = RedditPost.objects.count()
+        update_progress('posts', count, created_count, total=total_posts)
             
         return f"Ingested {count} posts ({created_count} new). Newest ID: {newest_id}"
     except Exception as e:
         error_msg = f"Error ingesting posts: {str(e)}"
         print(f"[{timezone.now()}] {error_msg}")
+        update_progress('posts', 0, 0, status='error', error=str(e))
         return error_msg
 
 
@@ -166,11 +199,16 @@ def ingest_comments():
             global_settings.empty_comment_fetch_count = 0
             global_settings.save(update_fields=['last_comment_id', 'empty_comment_fetch_count'])
             print(f"[{timezone.now()}] Processed {count} comments ({created_count} new). Newest ID: {newest_id}")
+        
+        # Update progress in Redis
+        total_comments = RedditComment.objects.count()
+        update_progress('comments', count, created_count, total=total_comments)
             
         return f"Ingested {count} comments ({created_count} new). Newest ID: {newest_id}"
     except Exception as e:
         error_msg = f"Error ingesting comments: {str(e)}"
         print(f"[{timezone.now()}] {error_msg}")
+        update_progress('comments', 0, 0, status='error', error=str(e))
         return error_msg
 
 
@@ -187,14 +225,26 @@ def match_campaign(campaign_id):
         match_count = 0
         BATCH_SIZE = 1000
         
+        # Calculate the earliest keyword start time (keyword.created_at - 30 minutes)
+        # This determines the minimum time window for matching
+        from datetime import timedelta
+        keyword_start_times = {kw.id: kw.created_at - timedelta(minutes=30) for kw in keywords}
+        earliest_start_time = min(keyword_start_times.values())
+        
+        print(f"[{timezone.now()}] Campaign {campaign.name}: Earliest keyword window starts at {earliest_start_time}")
+        
         # --- 1. Process Posts ---
         last_post_id = campaign.last_processed_post_id
         max_post_id_processed = last_post_id
         
         while True:
-            # Fetch batch of posts with ID > last_processed
-            # Order by ID asc to process in insertion order
-            posts = list(RedditPost.objects.filter(id__gt=max_post_id_processed).order_by('id')[:BATCH_SIZE])
+            # Fetch batch of posts with ID > last_processed AND created_utc >= earliest start time
+            posts = list(
+                RedditPost.objects.filter(
+                    id__gt=max_post_id_processed,
+                    created_utc__gte=earliest_start_time
+                ).order_by('id')[:BATCH_SIZE]
+            )
             
             if not posts:
                 break
@@ -206,7 +256,9 @@ def match_campaign(campaign_id):
                 
                 # Check ALL keywords for this post
                 for kw in keywords:
-                    if kw.name.lower() in text_to_scan:
+                    # Only match if post was created after keyword's time window
+                    kw_start_time = keyword_start_times[kw.id]
+                    if post.created_utc >= kw_start_time and kw.name.lower() in text_to_scan:
                         CampaignMatch.objects.get_or_create(
                             campaign=campaign,
                             post=post,
@@ -230,8 +282,13 @@ def match_campaign(campaign_id):
         max_comment_id_processed = last_comment_id
         
         while True:
-            # Fetch batch of comments with ID > last_processed
-            comments = list(RedditComment.objects.filter(id__gt=max_comment_id_processed).order_by('id')[:BATCH_SIZE])
+            # Fetch batch of comments with ID > last_processed AND created_utc >= earliest start time
+            comments = list(
+                RedditComment.objects.filter(
+                    id__gt=max_comment_id_processed,
+                    created_utc__gte=earliest_start_time
+                ).order_by('id')[:BATCH_SIZE]
+            )
             
             if not comments:
                 break
@@ -243,7 +300,9 @@ def match_campaign(campaign_id):
                 
                 # Check ALL keywords for this comment
                 for kw in keywords:
-                    if kw.name.lower() in text_to_scan:
+                    # Only match if comment was created after keyword's time window
+                    kw_start_time = keyword_start_times[kw.id]
+                    if comment.created_utc >= kw_start_time and kw.name.lower() in text_to_scan:
                         CampaignMatch.objects.get_or_create(
                             campaign=campaign,
                             comment=comment,

@@ -327,3 +327,40 @@ def global_data_delete(request):
     campaigns = Campaign.objects.all().prefetch_related('keywords')
     return render(request, 'campaigns/campaign_list.html', {'campaigns': campaigns, 'settings': settings})
 
+
+def get_ingestion_progress(request):
+    """API endpoint to get real-time ingestion progress from Redis"""
+    import json
+    import redis
+    from django.http import JsonResponse
+    from django.conf import settings as django_settings
+    
+    try:
+        r = redis.from_url(django_settings.REDIS_URL)
+        progress_raw = r.get('reddit_watch:ingestion_progress')
+        
+        if progress_raw:
+            progress = json.loads(progress_raw)
+        else:
+            # Fallback to database counts if no Redis data
+            progress = {
+                'posts': {
+                    'last_fetch_at': None,
+                    'last_count': 0,
+                    'new_count': 0,
+                    'total': RedditPost.objects.count(),
+                    'status': 'unknown'
+                },
+                'comments': {
+                    'last_fetch_at': None,
+                    'last_count': 0,
+                    'new_count': 0,
+                    'total': RedditComment.objects.count(),
+                    'status': 'unknown'
+                }
+            }
+        
+        return JsonResponse(progress)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+

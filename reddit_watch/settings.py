@@ -127,6 +127,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://redis:6379/0')
 CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='django-db')
 
+# Redis for caching (reusing Celery broker)
+REDIS_URL = config('REDIS_URL', default=CELERY_BROKER_URL)
+
 # Celery Beat Configuration
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERY_TIMEZONE = TIME_ZONE
