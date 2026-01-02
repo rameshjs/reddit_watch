@@ -21,25 +21,29 @@ def campaign_create(request):
     name = request.POST.get('name')
     if name:
         is_watching = request.POST.get('is_watching') == 'on'
-        interval_val = request.POST.get('watch_interval_minutes', 60)
+        # Calculate seconds from H/M/S
         try:
-            interval = int(interval_val)
-        except ValueError:
-            interval = 60
+            h = int(request.POST.get('hours', 0) or 0)
+            m = int(request.POST.get('minutes', 0) or 0)
+            s = int(request.POST.get('seconds', 0) or 0)
             
-        Campaign.objects.create(
+            interval_seconds = (h * 3600) + (m * 60) + s
+            if interval_seconds < 30:
+                interval_seconds = 30
+        except ValueError:
+            interval_seconds = 3600 # Default 1 hour
+            
+        campaign = Campaign.objects.create(
             name=name, 
             description=request.POST.get('description', ''),
             is_watching=is_watching,
-            watch_interval_minutes=interval
+            watch_interval_seconds=interval_seconds
         )
-    
-    campaign.save()
     
     # Check if update came from detail page
     if request.POST.get('source') == 'detail':
         # Refetch to ensure optimizations (though single object is cheap)
-        campaign = get_object_or_404(Campaign.objects.prefetch_related('keywords__tags'), pk=pk)
+        campaign = get_object_or_404(Campaign.objects.prefetch_related('keywords__tags'), pk=campaign.pk)
         return render(request, 'campaigns/campaign_detail.html', {'campaign': campaign})
 
     campaigns = Campaign.objects.all().prefetch_related('keywords')
@@ -56,13 +60,22 @@ def campaign_update(request, pk):
     # Handle checkbox for is_watching
     campaign.is_watching = request.POST.get('is_watching') == 'on'
     
-    # Handle watch_interval_minutes
-    interval = request.POST.get('watch_interval_minutes')
-    if interval:
-        try:
-            campaign.watch_interval_minutes = int(interval)
-        except ValueError:
-            pass # Keep existing value if invalid
+    # Handle watch_interval_seconds
+    try:
+        h = int(request.POST.get('hours', 0) or 0)
+        m = int(request.POST.get('minutes', 0) or 0)
+        s = int(request.POST.get('seconds', 0) or 0)
+        
+        # Only update if we have at least some time input, or if it's explicitly 0 (though 0 becomes 30)
+        # Assuming form always sends these
+        total = (h * 3600) + (m * 60) + s
+        
+        if total < 30:
+            total = 30
+            
+        campaign.watch_interval_seconds = total
+    except ValueError:
+        pass # Keep existing value if invalid
             
     campaign.save()
     

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load django_bootstrap5 %}
+{% load campaign_tags %}
 
 {% block title %}Campaigns - Reddit Watch{% endblock %}
 
@@ -64,7 +65,7 @@
                         </span>
                         {% else %}
                         <span class="badge bg-success" style="font-size: 0.65em;">
-                            <i class="bi bi-activity me-1"></i>Watching ({{ campaign.watch_interval_minutes }}m)
+                            <i class="bi bi-activity me-1"></i>Watching ({{ campaign.watch_interval_seconds }}s)
                         </span>
                         {% endif %}
                     </td>
@@ -154,13 +155,34 @@
                     </div>
 
                     <div class="mb-0">
-                        <label for="editInterval{{ campaign.id }}"
-                            class="form-label fw-medium small text-uppercase text-muted">Check Interval
-                            (Minutes)</label>
-                        <input type="number" class="form-control" id="editInterval{{ campaign.id }}"
-                            name="watch_interval_minutes" value="{{ campaign.watch_interval_minutes }}" min="5"
-                            step="1">
-                        <div class="form-text">How often to check for new posts.</div>
+                        <label class="form-label fw-medium small text-uppercase text-muted">Check Interval</label>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="editHours{{ campaign.id }}"
+                                        name="hours" value="{{ campaign.watch_interval_seconds|get_hours }}" min="0"
+                                        placeholder="0">
+                                    <span class="input-group-text text-muted">h</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="editMinutes{{ campaign.id }}"
+                                        name="minutes" value="{{ campaign.watch_interval_seconds|get_minutes }}" min="0"
+                                        max="59" placeholder="0">
+                                    <span class="input-group-text text-muted">m</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="editSeconds{{ campaign.id }}"
+                                        name="seconds" value="{{ campaign.watch_interval_seconds|get_seconds }}" min="0"
+                                        max="59" placeholder="0">
+                                    <span class="input-group-text text-muted">s</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text mt-1">Minimum 30 seconds.</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -240,11 +262,31 @@
                     </div>
 
                     <div class="mb-0">
-                        <label for="createInterval" class="form-label fw-medium small text-uppercase text-muted">Check
-                            Interval (Minutes)</label>
-                        <input type="number" class="form-control" id="createInterval" name="watch_interval_minutes"
-                            value="60" min="5" step="1">
-                        <div class="form-text">How often to check for new posts.</div>
+                        <label class="form-label fw-medium small text-uppercase text-muted">Check Interval</label>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="createHours" name="hours" value="1"
+                                        min="0" placeholder="0">
+                                    <span class="input-group-text text-muted">h</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="createMinutes" name="minutes"
+                                        value="0" min="0" max="59" placeholder="0">
+                                    <span class="input-group-text text-muted">m</span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="createSeconds" name="seconds"
+                                        value="0" min="0" max="59" placeholder="0">
+                                    <span class="input-group-text text-muted">s</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text mt-1">Minimum 30 seconds.</div>
                     </div>
                 </div>
                 <div class="modal-footer">

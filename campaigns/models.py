@@ -11,7 +11,7 @@ class Campaign(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     is_watching = models.BooleanField(default=False)
-    watch_interval_minutes = models.IntegerField(default=60, help_text="Interval in minutes to check Reddit")
+    watch_interval_seconds = models.IntegerField(default=3600, help_text="Interval in seconds to check Reddit")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -34,8 +34,8 @@ class Campaign(models.Model):
         
         if self.is_watching:
             schedule, _ = IntervalSchedule.objects.get_or_create(
-                every=self.watch_interval_minutes,
-                period=IntervalSchedule.MINUTES,
+                every=self.watch_interval_seconds,
+                period=IntervalSchedule.SECONDS,
             )
             
             PeriodicTask.objects.update_or_create(
